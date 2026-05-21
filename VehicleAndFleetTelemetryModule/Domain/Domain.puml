@@ -1,0 +1,147 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Vehicle Management Domain Model
+
+Package VehicleManagement {
+   Package Domain {
+      Package Entities {
+         Package "Vehicle Aggregate" <<Rectangle>> {
+            Class Vehicle <<AggregateRoot>> {
+               - id: string
+               - fleetId: string [nullable]
+               - specification: VehicleSpecification
+               - type: VehicleType
+               - sensor: FuelSensor [nullable]
+               - readings: List<FuelSensorReading>
+               - licensePlate: string
+               - createdAt: DateTime
+               - updatedAt: DateTime
+               ---
+               + {static} register(id: string, fleetId: string, specification: VehicleSpecification, type: VehicleType, licensePlate: string): Vehicle
+               + updateDetails(specification: VehicleSpecification, type: VehicleType, licensePlate: string): void
+               + assignToFleet(fleetId: string): void
+               + removeFromFleet(): void
+               + assignFuelSensor(id: string, serialNo: string): void
+               + recordSimulatedReading(fuelLevel: float, timestamp: DateTime): void
+               + getId(): string
+               + getFleetId(): string
+               + getSpecification(): VehicleSpecification
+               + getType(): VehicleType
+               + getLicensePlate(): String
+               + getSensor(): FuelSensor
+               + getReadings(): List<FuelSensorReading>
+            }
+
+            Class FuelSensor {
+               - id: string
+               - serialNo: String
+               - createdAt: DateTime
+               - updatedAt: DateTime
+               ---
+               + getId(): string
+               + getSerialNo(): String
+            }
+
+            Class FuelSensorReading {
+               - id: string
+               - timestamp: DateTime
+               - fuelLevel: Float
+               ---
+               + getId(): string
+               + getTimestamp(): DateTime
+               + getFuelLevel(): Float
+            }
+
+            ' Internal relationships
+            Vehicle "1" -- "0..1" FuelSensor : has >
+            Vehicle "1" -- "0..*" FuelSensorReading : tracks >
+         }
+
+         Class Fleet <<AggregateRoot>> {
+            - id: string
+            - name: String
+            - fleetManagerId: string
+            - createdAt: DateTime
+            - updatedAt: DateTime
+            ---
+            + {static} create(id: string, name: String): Fleet
+            + updateName(name: String): void
+            + getId(): string
+            + getName(): String
+            + getFleetManagerId(): string
+         }
+
+         Class FleetManager <<AggregateRoot>> {
+            - id: string
+            - fullName: Name
+            - email: String
+            - createdAt: DateTime
+            - updatedAt: DateTime
+            ---
+            + {static} create(id: string, fullName: Name, email: String): FleetManager
+            + updateDetails(fullName: Name, email: String): void
+            + getId(): string
+            + getName(): Name
+            + getEmail(): String
+         }
+
+         ' Relationships
+         Vehicle ..> Fleet : references by fleetId >
+         Fleet ..> FleetManager : references by fleetManagerId >
+      }
+
+      Package ValueObjects {
+         Class Name {
+            - firstName: String
+            - lastName: String
+            ---
+            + Name(firstName: String, lastName: String)
+            + getFirstName(): String
+            + getLastName(): String
+            + getFullName(): String
+         }
+
+         Class VehicleSpecification {
+            - make: String
+            - model: String
+            - year: Int
+            ---
+            + VehicleSpecification(make: String, model: String, year: Int)
+            + getMake(): String
+            + getModel(): String
+            + getYear(): Int
+         }
+      }
+
+      Package Enums {
+         Enum VehicleType {
+            SEDAN
+            SUV
+            TRUCK
+            VAN
+            MOTORCYCLE
+         }
+      }
+
+      Package Repositories {
+         Interface VehicleRepository {
+            + save(vehicle: Vehicle): void
+            + findById(id: string): Vehicle
+            + deleteById(id: string): void
+         }
+
+         Interface FleetRepository {
+            + save(fleet: Fleet): void
+            + findById(id: string): Fleet
+            + deleteById(id: string): void
+         }
+
+         Interface FleetManagerRepository {
+            + save(manager: FleetManager): void
+            + findById(id: string): FleetManager
+            + deleteById(id: string): void
+         }
+      }
+   }
+}
