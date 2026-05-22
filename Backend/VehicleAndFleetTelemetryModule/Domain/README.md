@@ -17,7 +17,7 @@ These are the core, mutable components of the system contained in the domain lay
 5. Fuel Sensor Reading
 	   - Also a minor entity nested within the vehicle aggregate. It models the data sent by a fuel sensor attached to a vehicle, sending out telemetry data for fuel level at particular timestamps.
 
-![Entities](Docs/Entities.png "Entities")
+![Entities](../../../Docs/Entities.png "Entities")
 
 **Value Objects**
 These are immutable objects in the domain that do not have their own lifecycle, instead they act as attributes with both value and behavior. They are owned by entities with an aggregate relationship and serve as a way to reduce an entity's responsibilities by delegating complexity. These value objects are:
@@ -26,7 +26,7 @@ These are immutable objects in the domain that do not have their own lifecycle, 
 2. Name
 	   - Describes a person's name, breaking it into first and last name while also allowing the formation of the full name
 
-![Value Objects](Docs/ValueObjects.png "Value Objects")
+![Value Objects](../../../Docs/ValueObjects.png "Value Objects")
 
 
 We also have the enumeration **VehicleType** which defines different vehicle types as a collection of constants. These types are:
@@ -48,5 +48,5 @@ In this module, the repositories are:
 
 They ensure the domain layer with its core business logic remain uncontaminated by infrastructure specific implementation of data storage, enforcing modularity.
 
-![Repositories](Docs/Repositories.png "Repositories")
+![Repositories](../../../Docs/Repositories.png "Repositories")
 
