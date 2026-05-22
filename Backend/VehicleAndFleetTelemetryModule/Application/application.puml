@@ -2,7 +2,7 @@
 skinparam handwritten false
 skinparam titleFontSize 18
 top to bottom direction
-title FleetFuel Application Layer Design
+title FleetFuel Vehicle and Fuel Telemetry Module Application Layer Design
 
 Package VehicleManagementModule {
 
@@ -15,6 +15,10 @@ Package VehicleManagementModule {
             Interface FleetRepository {
                 + save(fleet: Fleet): void
                 + findById(id: string): Fleet
+            }
+            Interface FleetManagerRepository {
+                + save(manager: FleetManager): void
+                + findById(id: string): FleetManager
             }
         }
     }
@@ -53,9 +57,31 @@ Package VehicleManagementModule {
                 + currentFuelLevel: float
                 + lastUpdated: DateTime
             }
+
+            Class CreateFleetManagerInput {
+                + id: string
+                + firstName: string
+                + lastName: string
+            }
+
+            Class ViewVehicleDetailsDTO {
+                + id: string
+                + make: string
+                + model: string
+                + year: int
+                + type: string
+                + licensePlate: string
+                + fleetId: string
+            }
         }
 
         Package Services {
+            Class FleetManagerApplicationService {
+                - managerRepo: FleetManagerRepository
+                ---
+                + createManager(input: CreateFleetManagerInput): void
+            }
+            
             Class FleetApplicationService {
                 - fleetRepo: FleetRepository
                 ---
@@ -72,6 +98,7 @@ Package VehicleManagementModule {
                 + assignVehicleToFleet(vehicleId: string, fleetId: string): void
                 + removeVehicleFromFleet(vehicleId: string): void
                 + assignFuelSensor(vehicleId: string, sensorId: string, serialNo: string): void
+                + viewVehicleDetails(id: string): ViewVehicleDetailsDTO
             }
 
             Class TelemetryApplicationService {
@@ -87,9 +114,11 @@ Package VehicleManagementModule {
         ' Layer Dependencies
         VehicleApplicationService ..> RegisterVehicleInput
         VehicleApplicationService ..> UpdateVehicleInput
+        VehicleApplicationService ..> ViewVehicleDetailsDTO
         TelemetryApplicationService ..> RecordReadingInput
         TelemetryApplicationService ..> VehicleFuelStatusDTO
         FleetApplicationService ..> CreateFleetInput
+        FleetManagerApplicationService ..> CreateFleetManagerInput
     }
 
     ' Orchestration links
@@ -97,5 +126,6 @@ Package VehicleManagementModule {
     VehicleApplicationService -up-> VehicleRepository
     VehicleApplicationService -up-> FleetRepository
     TelemetryApplicationService -up-> VehicleRepository
+    FleetManagerApplicationService -up-> FleetManagerRepository
 }
 @enduml

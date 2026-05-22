@@ -1,7 +1,7 @@
 @startuml
 skinparam handwritten false
 skinparam titleFontSize 18
-title FleetFuel Presentation Layer Design
+title FleetFuel Vehicle and Fuel Telemetry Module Presentation Layer Design
 
 Package VehicleManagementModule {
    
@@ -11,6 +11,7 @@ Package VehicleManagementModule {
             Class FleetApplicationService
             Class VehicleApplicationService
             Class TelemetryApplicationService
+            Class FleetManagerApplicationService
         }
     }
    
@@ -23,6 +24,12 @@ Package VehicleManagementModule {
             ---
             + createFleet(req: HTTPRequest): HTTPResponse [POST /api/fleets]
             + updateFleetName(id: string, req: HTTPRequest): HTTPResponse [PUT /api/fleets/{id}/name]
+         }
+
+         Class FleetManagerController {
+            - managerService: FleetManagerApplicationService
+            ---
+            + createManager(req: HTTPRequest): HTTPResponse [POST /api/managers]
          }
 
          Class VehicleController {
@@ -49,5 +56,6 @@ Package VehicleManagementModule {
    FleetController --> FleetApplicationService
    VehicleController --> VehicleApplicationService
    TelemetryController --> TelemetryApplicationService
+   FleetManagerController --> FleetManagerApplicationService
 }
 @enduml

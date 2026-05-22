@@ -5,24 +5,30 @@ left to right direction
 actor "Fleet Manager" as FM
 actor "Simulation Engine" as SE
 
-rectangle "Vehicle Management Module" {
+rectangle "Vehicle and Fuel Telemetry Module" {
    
-   ' 1. Administrative / Setup Use Cases
-    package "Administrative Setup" {
-        FM --> (Create Fleet)
-        FM --> (Update Fleet Name)
+    ' 1. Vehicle Management
+    package "Vehicle Management" {
         FM --> (Register Vehicle)
         FM --> (Update Vehicle Details)
-    }
-
-   ' 2. Structural Assignments
-    package "Fleet Coordination" {
+        FM --> (View Vehicle Details)
         FM --> (Assign Vehicle to Fleet)
         FM --> (Remove Vehicle from Fleet)
         FM --> (Assign Fuel Sensor on Vehicle)
     }
 
-   ' 3. Core Simulation & Telemetry (Serves the System's Main Goal)
+    ' 2. Fleet Management
+    package "Fleet Management" {
+        FM --> (Create Fleet)
+        FM --> (Update Fleet Name)
+    }
+
+    ' Fleet Manager
+    package "Fleet Manager" {
+        FM --> (Create Manager)
+    }
+
+    ' 3. Core Simulation & Telemetry (Serves the System's Main Goal)
     package "Real-Time Telemetry Simulation" {
         SE --> (Generate Simulated Fuel Reading)
         FM --> (View Fleet Fuel Efficiency Dashboard)

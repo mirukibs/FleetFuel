@@ -127,19 +127,16 @@ Package VehicleManagement {
          Interface VehicleRepository {
             + save(vehicle: Vehicle): void
             + findById(id: string): Vehicle
-            + deleteById(id: string): void
          }
 
          Interface FleetRepository {
             + save(fleet: Fleet): void
             + findById(id: string): Fleet
-            + deleteById(id: string): void
          }
 
          Interface FleetManagerRepository {
             + save(manager: FleetManager): void
             + findById(id: string): FleetManager
-            + deleteById(id: string): void
          }
       }
 
