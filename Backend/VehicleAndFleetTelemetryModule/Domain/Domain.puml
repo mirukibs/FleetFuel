@@ -1,7 +1,7 @@
 @startuml
 skinparam handwritten false
 skinparam titleFontSize 18
-title FleetFuel Vehicle Management Domain Model
+title FleetFuel Vehicle and Fuel Telemetry Module
 
 Package VehicleManagement {
    Package Domain {
@@ -143,5 +143,9 @@ Package VehicleManagement {
             + deleteById(id: string): void
          }
       }
+
+      VehicleSpecification --o Vehicle : has <
+      Name --o FleetManager : has <
+      VehicleType --o Vehicle : has <
    }
 }
