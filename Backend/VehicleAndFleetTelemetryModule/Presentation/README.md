@@ -6,21 +6,21 @@ Similar to the application layer, the presentation layer acts as a **gateway to 
 These contracts are defined in the **controllers** within the layer. Our controllers are:
 **1. Vehicle controller**
 - Exposes api endpoints according to the vehicle use cases defined in the application layer:
-	     1. Create fleet -  *[POST /api/fleets]*
-	     2. Update fleet name - *[PUT /api/fleets/{id}/name]*
+	1. Create fleet -  *[POST /api/fleets]*
+	2. Update fleet name - *[PUT /api/fleets/{id}/name]*
 
 **2. Telemetry controller**
 - Exposes api endpoints according to the fleet use cases defined in the application layer:
-	     1. Register vehicle - *[POST /api/vehicles]*
-	     2. Update vehicle details - *[PUT /api/vehicles/{id}]*
-	     3. Assign vehicle to fleet - *[POST /api/vehicles/{id}/fleet]*
-	     4. Remove vehicle from fleet - *[Delete /api/vehicles/{id}]*
-	     5. Assign fuel sensor - *[POST /api/vehicles/{id}/fuel-sensor]*
+	1. Register vehicle - *[POST /api/vehicles]*
+	2. Update vehicle details - *[PUT /api/vehicles/{id}]*
+	3. Assign vehicle to fleet - *[POST /api/vehicles/{id}/fleet]*
+	4. Remove vehicle from fleet - *[Delete /api/vehicles/{id}]*
+	5. Assign fuel sensor - *[POST /api/vehicles/{id}/fuel-sensor]*
 
 **3. Fleet controller**
 - Exposes api endpoints according to the fleet use cases defined in the application layer (Note that *receive simulated fuel reading* will not pass through the api endpoints but rather be generated internally through a simulation engine):
-	     1. View fuel efficiency dashboard - *[GET /api/fleets/{fleetid}/dashboard]*
+	1. View fuel efficiency dashboard - *[GET /api/fleets/{fleetid}/dashboard]*
 
 **4. Fleet manager controller**
 - Exposes api endpoints according to the fleet manager use cases defined in the application layer:
-	     1. Create manager - *[POST /api/managers]*
+	1. Create manager - *[POST /api/managers]*

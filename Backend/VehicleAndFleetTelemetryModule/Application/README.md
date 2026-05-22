@@ -8,27 +8,27 @@ The application layer, through the repositories exposed by the domain layer, coo
 The use cases orchestrated in this module are the features exposed to the user, and they are managed in the **application services**:
 **1. Fleet application service**
 - Implements the following use cases:
-	     1. Create fleet
-	     2. Update fleet name
+	1. Create fleet
+	2. Update fleet name
 
 **2. Fleet manager application service**
 - Implements the following use case:
-	     1. Create fleet manager
+	1. Create fleet manager
 
 **3. Vehicle application service**
 - Implements the following use cases:
-	     1. Register vehicle
-	     2. Update vehicle details
-	     3. View vehicle details
-	     4. Assign vehicle to fleet
-	     5. Remove vehicle from fleet
-	     6. Assign fuel sensor
+	1. Register vehicle
+	2. Update vehicle details
+	3. View vehicle details
+	4. Assign vehicle to fleet
+	5. Remove vehicle from fleet
+	6. Assign fuel sensor
 
 **4. Telemetry application service**
 - Implements the following use cases:
-	     1. Generate simulated fuel reading
-	     2. Trigger fuel theft alert (as an extension of **generate simulated fuel reading** use case)
-	     3. View fuel efficiency dashboard
+	1. Generate simulated fuel reading
+	2. Trigger fuel theft alert (as an extension of **generate simulated fuel reading** use case)
+	3. View fuel efficiency dashboard
 
 ![use case](<../../../Docs/use case.png> "Use Case")
 
