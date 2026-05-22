@@ -4,6 +4,8 @@ The **vehicle and fuel telemetry module** is designed following the layered arch
 - Value objects and Enums
 - Repositories
 
+![Domain](Domain.png)
+
 **Entities**
 These are the core, mutable components of the system contained in the domain layer, governing the module's business logic. The entities in this module are:
 1. Vehicle
