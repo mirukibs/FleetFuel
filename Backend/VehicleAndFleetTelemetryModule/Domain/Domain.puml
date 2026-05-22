@@ -119,7 +119,6 @@ Package VehicleManagement {
             SEDAN
             SUV
             TRUCK
-            VAN
             MOTORCYCLE
          }
       }
