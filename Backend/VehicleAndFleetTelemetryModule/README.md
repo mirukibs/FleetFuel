@@ -35,7 +35,7 @@ The scope of this module is limited to the solving the core problem: **difficult
 | Fleet manager registration and other simple crud                   | No major auth or person management features                     |
  
 ## Design Principles  
-This module is deliberately design with the following principles in mind: 
+This module is deliberately design with the following principles in mind:
 **1. Simplicity**
 - The design will adheres to the KISS principle as a default to **ensure less complexity**. The variables in consideration are: the team's current **technological competence** and the **tight timeline** imposed by the project.
 - This principle is highlighted in decision such as **simulating fuel sensor ingestion** instead of implementing actual fuel sensor ingestion with real-time telemetry ingestion.
