@@ -1,0 +1,17 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start:dev": "nodemon index.mjs",
+    "start:prod": "node index.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bfast-function": "^3.2.4"
+  },
+  "private": true,
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
