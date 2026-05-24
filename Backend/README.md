@@ -18,12 +18,36 @@ Use `npm install` instead of `npm ci` only when intentionally updating dependenc
 
 ## Start Locally
 
+Start the development server with file watching:
+
 ```bash
 cd Backend
 npm run start:dev
 ```
 
-The local BFast runtime starts on port `3003`.
+Start the production-style local server without file watching:
+
+```bash
+cd Backend
+npm start
+```
+
+The local BFast runtime starts on port `3003` by default. Override it with `PORT`:
+
+```bash
+cd Backend
+PORT=4000 npm start
+```
+
+The backend entrypoint is `Backend/index.mjs`. It starts `bfast-function` with local functions enabled and points BFast at:
+
+```text
+bfastJsonPath: Backend/bfast.json
+functionsDirPath: Backend/VehicleAndFleetTelemetryModule/Presentation
+assets: Backend/Assets
+```
+
+`functionsDirPath` is the important setting for endpoint discovery. BFast recursively scans that Presentation folder and loads endpoint descriptors from each controller module, so endpoint files do not need to be re-exported from `Presentation/index.mjs`.
 
 Useful runtime endpoints:
 
@@ -31,6 +55,38 @@ Useful runtime endpoints:
 curl http://localhost:3003/functions-health
 curl "http://localhost:3003/functions-all?format=json"
 ```
+
+Expected discovered application endpoints include:
+
+```text
+POST   /api/managers
+POST   /api/fleets
+PUT    /api/fleets/:id/name
+POST   /api/vehicles
+PUT    /api/vehicles/:id
+POST   /api/vehicles/:id/fleet
+DELETE /api/vehicles/:id
+POST   /api/vehicles/:id/fuel-sensor
+POST   /api/telemetry/readings
+GET    /api/fleets/:fleetId/dashboard
+```
+
+## BFast Config
+
+`Backend/bfast.json` controls function discovery ignore rules:
+
+```json
+{
+  "ignore": [
+    "**/node_modules/**",
+    "**/specs/**",
+    "**/*.specs.js",
+    "**/*.specs.mjs"
+  ]
+}
+```
+
+Keep tests and support files outside endpoint descriptor exports, or add explicit ignore rules here when needed.
 
 ## Run Tests
 

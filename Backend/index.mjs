@@ -1,13 +1,17 @@
 import {start} from "bfast-function";
+import {dirname, join} from "node:path";
+import {fileURLToPath} from "node:url";
 
+const backendRoot = dirname(fileURLToPath(import.meta.url));
+const port = process.env.PORT ?? 3003;
 
 // Start the serverless engine
 start({
-    port: 3003,
+    port,
     mode: "local",
     functionsConfig: {
-        bfastJsonPath: "./bfast.json",
-        functionsDirPath: "./VehicleAndFleetTelemetryModule/Presentation",
-        assets: "./Assets",
+        bfastJsonPath: join(backendRoot, "bfast.json"),
+        functionsDirPath: join(backendRoot, "VehicleAndFleetTelemetryModule/Presentation"),
+        assets: join(backendRoot, "Assets"),
     }
 }).catch(err => console.log(err));

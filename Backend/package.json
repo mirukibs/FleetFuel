@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "dev": "npm run start:dev",
+    "start": "npm run start:prod",
     "start:dev": "nodemon index.mjs",
     "start:prod": "node index.mjs",
     "test": "node --test"
