@@ -53,6 +53,7 @@ Useful runtime endpoints:
 
 ```bash
 curl http://localhost:3003/functions-health
+curl "http://localhost:3003/functions-all"
 curl "http://localhost:3003/functions-all?format=json"
 ```
 
