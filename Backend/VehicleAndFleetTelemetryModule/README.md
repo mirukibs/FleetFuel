@@ -1,2 +1,0 @@
-# Vehicle and fuel management module design for sprint 1
-This architecture addresses the difficulty logistics companies face in **monitoring their vehicles' fuel consumption** in real time as part of their whole fleet. It is the core model of the solution that attaches fuel sensors to all vehicles in available fleets to simulate monitoring fuel consumption in real-time.
