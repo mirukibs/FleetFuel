@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
+@import "tailwindcss";
+
+/* ── Tailwind v4 theme tokens ── */
+@theme {
+  /* Fonts */
+  --font-display: "Syne", sans-serif;
+  --font-numeric: "DM Sans", sans-serif;
+
+  /* Brand */
+  --color-primary: oklch(55% 0.22 250);
+  --color-primary-foreground: oklch(98% 0.01 250);
+
+  /* Backgrounds */
+  --color-background: oklch(98% 0.005 250);
+  --color-foreground: oklch(15% 0.02 250);
+
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(15% 0.02 250);
+
+  --color-muted: oklch(94% 0.01 250);
+  --color-muted-foreground: oklch(50% 0.02 250);
+
+  --color-border: oklch(88% 0.01 250);
+  --color-ring: oklch(55% 0.22 250);
+
+  --color-accent: oklch(60% 0.18 190);
+  --color-accent-foreground: oklch(98% 0.01 190);
+
+  --color-destructive: oklch(58% 0.22 25);
+  --color-success: oklch(55% 0.18 150);
+  --color-warning: oklch(72% 0.18 80);
+  --color-warning-foreground: oklch(25% 0.06 80);
+  --color-info: oklch(58% 0.2 230);
+
+  /* Sidebar */
+  --color-sidebar: oklch(13% 0.03 250);
+  --color-sidebar-foreground: oklch(90% 0.02 250);
+  --color-sidebar-border: oklch(22% 0.03 250);
+  --color-sidebar-accent: oklch(20% 0.04 250);
+  --color-sidebar-accent-foreground: oklch(95% 0.02 250);
+  --color-sidebar-primary: oklch(55% 0.22 250);
+  --color-sidebar-primary-foreground: oklch(98% 0.01 250);
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px oklch(0% 0 0 / 0.06), 0 1px 2px oklch(0% 0 0 / 0.04);
+  --shadow-elevated: 0 4px 16px oklch(0% 0 0 / 0.12), 0 2px 4px oklch(0% 0 0 / 0.06);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {}
+
+.dark {
+  --color-background: oklch(11% 0.02 250);
+  --color-foreground: oklch(94% 0.01 250);
+  --color-card: oklch(14% 0.02 250);
+  --color-card-foreground: oklch(94% 0.01 250);
+  --color-muted: oklch(20% 0.02 250);
+  --color-muted-foreground: oklch(60% 0.02 250);
+  --color-border: oklch(22% 0.02 250);
+}
+
+/* Gradient utilities */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, oklch(55% 0.22 250), oklch(60% 0.18 210));
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in  { animation: fade-in  0.25s ease both; }
+.animate-slide-up { animation: slide-up 0.3s ease both; }
+
+/* Base */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; }
+
+.font-numeric {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Google Fonts import */
