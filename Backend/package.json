@@ -9,6 +9,9 @@
     "start:prod": "node index.mjs",
     "test": "node --test"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "bfast-function": "^3.2.4"
   },
