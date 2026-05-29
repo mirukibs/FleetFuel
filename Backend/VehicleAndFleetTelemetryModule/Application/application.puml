@@ -1,0 +1,131 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+top to bottom direction
+title FleetFuel Vehicle and Fuel Telemetry Module Application Layer Design
+
+Package VehicleManagementModule {
+
+    Package Domain {
+        Package Repositories {
+            Interface VehicleRepository {
+                + save(vehicle: Vehicle): void
+                + findById(id: string): Vehicle
+            }
+            Interface FleetRepository {
+                + save(fleet: Fleet): void
+                + findById(id: string): Fleet
+            }
+            Interface FleetManagerRepository {
+                + save(manager: FleetManager): void
+                + findById(id: string): FleetManager
+            }
+        }
+    }
+   
+    Package Application {
+        
+        Package DTOs {
+            Class CreateFleetInput {
+                + id: string
+                + name: string
+            }
+            Class RegisterVehicleInput {
+                + id: string
+                + fleetId: string
+                + make: string
+                + model: string
+                + year: int
+                + type: string
+                + licensePlate: string
+            }
+            Class UpdateVehicleInput {
+                + make: string
+                + model: string
+                + year: int
+                + type: string
+                + licensePlate: string
+            }
+            Class RecordReadingInput {
+                + vehicleId: string
+                + fuelLevel: float
+                + timestamp: DateTime
+            }
+            Class VehicleFuelStatusDTO {
+                + vehicleId: string
+                + licensePlate: string
+                + currentFuelLevel: float
+                + lastUpdated: DateTime
+            }
+
+            Class CreateFleetManagerInput {
+                + id: string
+                + firstName: string
+                + lastName: string
+            }
+
+            Class ViewVehicleDetailsDTO {
+                + id: string
+                + make: string
+                + model: string
+                + year: int
+                + type: string
+                + licensePlate: string
+                + fleetId: string
+            }
+        }
+
+        Package Services {
+            Class FleetManagerApplicationService {
+                - managerRepo: FleetManagerRepository
+                ---
+                + createManager(input: CreateFleetManagerInput): void
+            }
+            
+            Class FleetApplicationService {
+                - fleetRepo: FleetRepository
+                ---
+                + createFleet(input: CreateFleetInput): void
+                + updateFleetName(id: string, newName: string): void
+            }
+
+            Class VehicleApplicationService {
+                - vehicleRepo: VehicleRepository
+                - fleetRepo: FleetRepository
+                ---
+                + registerVehicle(input: RegisterVehicleInput): void
+                + updateVehicleDetails(id: string, input: UpdateVehicleInput): void
+                + assignVehicleToFleet(vehicleId: string, fleetId: string): void
+                + removeVehicleFromFleet(vehicleId: string): void
+                + assignFuelSensor(vehicleId: string, sensorId: string, serialNo: string): void
+                + viewVehicleDetails(id: string): ViewVehicleDetailsDTO
+            }
+
+            Class TelemetryApplicationService {
+                - vehicleRepo: VehicleRepository
+                ---
+                ' Driven by the Simulation Engine Actor
+                + generateSimulatedFuelReading(input: RecordReadingInput): void
+                ' Driven by the Fleet Manager Actor
+                + viewFleetFuelEfficiencyDashboard(fleetId: string): List<VehicleFuelStatusDTO>
+            }
+        }
+
+        ' Layer Dependencies
+        VehicleApplicationService ..> RegisterVehicleInput
+        VehicleApplicationService ..> UpdateVehicleInput
+        VehicleApplicationService ..> ViewVehicleDetailsDTO
+        TelemetryApplicationService ..> RecordReadingInput
+        TelemetryApplicationService ..> VehicleFuelStatusDTO
+        FleetApplicationService ..> CreateFleetInput
+        FleetManagerApplicationService ..> CreateFleetManagerInput
+    }
+
+    ' Orchestration links
+    FleetApplicationService -up-> FleetRepository
+    VehicleApplicationService -up-> VehicleRepository
+    VehicleApplicationService -up-> FleetRepository
+    TelemetryApplicationService -up-> VehicleRepository
+    FleetManagerApplicationService -up-> FleetManagerRepository
+}
+@enduml
