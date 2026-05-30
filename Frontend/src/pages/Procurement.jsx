@@ -6,11 +6,12 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLocalStorageState } from "@/lib/storage";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/componets/ui/dialog";
-                <div>
+
+const seedProcuments = [
   { id: "PR-2026-004", fleet: "Fleet Alpha", vehicle: "Scania P360 – TZN 330A", supplier: "Total Energies",  litres: 500, estimatedCost: "$740.00", date: "2026-05-24", approvedBy: null },
-                  <div className="font-medium">{selected.approvedBy || "—"}</div>
   { id: "PR-2026-006", fleet: "Fleet Gamma", vehicle: "Nissan Patrol – ARU 204G", supplier: "Oryx Energy",   litres: 150, estimatedCost: "$216.00", date: "2026-05-22", approvedBy: "Amelia Cole" },
-                
+];
+
 export default function Procurement() {
   const [requests, setRequests] = useLocalStorageState("fleetfuel.procurement.requests", seedRequests);
   const [filter, setFilter] = useState("all");
