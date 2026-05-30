@@ -1,125 +1,65 @@
-# FleetFuel — Fleet Fuel Procurement OS (MVP)
+# FleetFuel
 
-FleetFuel is a **B2B web application** that centralizes fleet fuel management and procurement.  
-It combines **fleet registration**, **supplier marketplace listings**, **procurement request → approval workflows**, and **reporting/export** into one interface.
+FleetFuel is a split workspace with a backend API and a Vite frontend. The frontend now consumes the backend telemetry and fleet endpoints directly instead of relying on static demo state.
 
-This repository currently ships an **MVP/demo**: it uses **mock data + in-browser persistence** (LocalStorage) instead of a backend, so you can run it immediately and see the full UI/flows.
+## Repo Layout
 
-## What this project does
+- `Backend/` - BFast function server for the Vehicle and Fleet Telemetry module
+- `Frontend/` - React + Vite application
+- `Docs/` - supporting documentation
 
-- **Fleet Management**
-  - Register vehicles
-  - Assign vehicles to fleets
-  - Assign fuel sensors (simulated)
-- **Supplier Marketplace**
-  - Add suppliers and view supplier profiles
-  - Request quotes (simulated)
-- **Procurement**
-  - Create procurement requests
-  - Approve / reject requests
-  - View full request details
-- **Reports**
-  - Schedule a report (simulated)
-  - Filter reports
-  - Export reports (CSV download)
-- **Admin Panel**
-  - Add managers
-  - Create fleet groups
-  - Remove fleets
-- **Settings**
-  - Theme toggle (dark/light)
-  - Notification preferences (saved locally)
+## Quick Start
 
-## Tech stack
+Run the backend first, then the frontend.
 
-- **React** + **Vite**
-- **Tailwind CSS v4**
-- **Radix UI** components
-- **React Router**
-- **Sonner** (toast notifications)
+### 1. Backend
 
-## Requirements (to run locally)
+```bash
+cd Backend
+npm ci
+npm run start:dev
+```
 
-- **Node.js LTS** (recommended: Node 20+)
-- **npm** (comes with Node)
+The backend listens on port `3003` by default.
 
-## Install & run (Windows / PowerShell)
+### 2. Frontend
 
-From the project folder:
-
-```powershell
-cd "c:\Users\hp\Pictures\HOTEL\FleetFuel"
+```bash
+cd Frontend
 npm install
 npm run dev
 ```
 
-Vite will print a URL like:
+The frontend defaults to `http://localhost:3003` for API requests. If your backend runs elsewhere, set `VITE_API_URL` before starting the frontend.
 
-- `http://localhost:5173/` (or another port if taken)
+## Useful Commands
 
-Open it in your browser to view the output.
+Backend:
 
-## Build & preview (optional)
+```bash
+cd Backend
+npm test
+```
 
-```powershell
+Frontend:
+
+```bash
+cd Frontend
 npm run build
 npm run preview
 ```
 
-## Data & persistence (important)
+## Backend API Surface
 
-This MVP uses **LocalStorage** to simulate a real database:
+The backend currently exposes endpoints for:
 
-- Vehicles: `fleetfuel.vehicles`
-- Suppliers: `fleetfuel.suppliers`
-- Procurement requests: `fleetfuel.procurement.requests`
-- Reports: `fleetfuel.reports`
-- Admin managers: `fleetfuel.admin.managers`
-- Admin fleets: `fleetfuel.admin.fleets`
-- Settings notification preferences: `fleetfuel.settings.notifications`
+- creating managers and fleets
+- registering, updating, assigning, and deleting vehicles
+- assigning fuel sensors
+- submitting simulated telemetry readings
+- fetching a fleet dashboard snapshot
 
-Storage helper:
-- `src/lib/storage.js` (`useLocalStorageState`)
+## Notes
 
-To reset the demo data:
-- Clear site data in the browser devtools, or delete the keys above from LocalStorage.
-
-## Project structure (high level)
-
-- `src/pages/` — main screens (Fleet, Suppliers, Procurement, Reports, Admin, Settings, etc.)
-- `src/componets/layout/` — App shell, Sidebar, Topbar
-- `src/componets/ui/` — UI primitives (Radix wrappers)
-- `src/componets/ui-kit/` — app-specific UI building blocks (KPI cards, sections)
-- `src/lib/` — shared utilities (theme, storage, utils)
-
-## Notes on the MVP scope
-
-The business model references SaaS tiers, marketplace listing fees, commissions, and reporting access.  
-In this repo, those are represented as **UI + simulated flows** (no payments, no real supplier billing, no hardware integrations).
-
-## Common issues
-
-- **Port already in use**
-  - Vite automatically tries another port and prints the correct URL.
-
-## Contributing
-
-- Keep changes focused (small PRs are easier to review).
-- Avoid backend/payment/ERP integrations in the MVP unless explicitly planned.
-
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- The frontend uses `Frontend/src/lib/client.js` as the API client.
+- The frontend build and backend tests are the fastest way to verify the workspace after changes.

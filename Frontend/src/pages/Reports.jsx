@@ -7,13 +7,13 @@ import { useLocalStorageState } from "@/lib/storage";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/componets/ui/dialog";
 
 const seedReports = [
-  { id: "RPT-001", title: "Monthly Fuel Consumption Summary",  period: "May 2026",    generated: "2026-05-25", type: "Consumption", size: "142 KB", status: "ready" },
-  { id: "RPT-002", title: "Fleet Cost Reconciliation Report",   period: "May 2026",    generated: "2026-05-25", type: "Financial",   size: "98 KB",  status: "ready" },
-  { id: "RPT-003", title: "Supplier Performance Analysis",      period: "Q2 2026",     generated: "2026-05-20", type: "Supplier",    size: "213 KB", status: "ready" },
-  { id: "RPT-004", title: "Fuel Theft & Anomaly Detection Log", period: "May 2026",    generated: "2026-05-24", type: "Security",    size: "67 KB",  status: "ready" },
-  { id: "RPT-005", title: "Vehicle Efficiency Benchmarks",      period: "Apr 2026",    generated: "2026-05-01", type: "Efficiency",  size: "188 KB", status: "ready" },
-  { id: "RPT-006", title: "Procurement Pipeline Export",        period: "YTD 2026",    generated: "2026-05-24", type: "Procurement", size: "305 KB", status: "ready" },
-  { id: "RPT-007", title: "June 2026 Consumption Projection",   period: "Jun 2026",    generated: "—",           type: "Forecast",    size: "—",      status: "scheduled" },
+  { id: "RPT-001", title: "Monthly Fuel Consumption Summary",  period: "May 2026",    generated: "2026-05-25", type: "Consumption", size: "142 KB" },
+  { id: "RPT-002", title: "Fleet Cost Reconciliation Report",   period: "May 2026",    generated: "2026-05-25", type: "Financial",   size: "98 KB" },
+  { id: "RPT-003", title: "Supplier Performance Analysis",      period: "Q2 2026",     generated: "2026-05-20", type: "Supplier",    size: "213 KB" },
+  { id: "RPT-004", title: "Fuel Theft & Anomaly Detection Log", period: "May 2026",    generated: "2026-05-24", type: "Security",    size: "67 KB" },
+  { id: "RPT-005", title: "Vehicle Efficiency Benchmarks",      period: "Apr 2026",    generated: "2026-05-01", type: "Efficiency",  size: "188 KB" },
+  { id: "RPT-006", title: "Procurement Pipeline Export",        period: "YTD 2026",    generated: "2026-05-24", type: "Procurement", size: "305 KB" },
+  { id: "RPT-007", title: "June 2026 Consumption Projection",   period: "Jun 2026",    generated: "—",           type: "Forecast",    size: "—" },
 ];
 
 const typeColors = {
@@ -39,7 +39,7 @@ export default function Reports() {
   }, [reports, typeFilter]);
 
   const handleExport = (r) => {
-    if (r.status !== "ready") return;
+    if (r.size === "—") return;
     const rows = [
       ["Report ID", r.id],
       ["Title", r.title],
@@ -47,7 +47,6 @@ export default function Reports() {
       ["Generated", r.generated],
       ["Type", r.type],
       ["Size", r.size],
-      ["Status", r.status],
     ];
     const csv = rows.map((row) => row.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -73,7 +72,6 @@ export default function Reports() {
       generated: "—",
       type: scheduleForm.type,
       size: "—",
-      status: "scheduled",
     };
     setReports((prev) => [created, ...prev]);
     toast.success("Report scheduled");
@@ -131,13 +129,13 @@ export default function Reports() {
                 {r.type}
               </span>
 
-              {r.status === "ready" ? (
-                <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0" onClick={() => handleExport(r)}>
-                  <Download className="size-3" /> Export
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground italic shrink-0">Scheduled</span>
-              )}
+                        {r.size !== "—" ? (
+                          <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0" onClick={() => handleExport(r)}>
+                            <Download className="size-3" /> Export
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic shrink-0">Scheduled</span>
+                        )}
             </div>
           ))}
         </div>

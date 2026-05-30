@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Truck, Plus, Search, Filter, Fuel, Wrench, WifiOff, AlertTriangle, X, AlertCircle } from "lucide-react";
+import { Truck, Plus, Search, Fuel, Wrench, WifiOff, AlertTriangle, AlertCircle } from "lucide-react";
 import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
-import { StatusPill } from "@/componets/ui-kit/StatusPill";
 import { Button } from "@/componets/ui/button";
 import { toast } from "sonner";
 import {
@@ -23,21 +22,15 @@ import {
   AlertDialogTitle,
 } from "@/componets/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useLocalStorageState } from "@/lib/storage";
-
-const seedVehicles = [
-  { id: "VH-001", plate: "KAZ 421B", make: "Isuzu",   model: "FVR",      year: 2021, type: "TRUCK",      fleet: "Fleet Alpha", fuelLevel: 78, sensor: "FS-AA1", status: "active" },
-  { id: "VH-002", plate: "DAR 087C", make: "Toyota",  model: "HiAce",    year: 2020, type: "SUV",        fleet: "Fleet Beta",  fuelLevel: 34, sensor: null,     status: "active" },
-  { id: "VH-003", plate: "TZN 330A", make: "Scania",  model: "P360",     year: 2019, type: "TRUCK",      fleet: "Fleet Alpha", fuelLevel: 92, sensor: "FS-BB3", status: "active" },
-  { id: "VH-004", plate: "MOR 155F", make: "Toyota",  model: "Land Cruiser", year: 2022, type: "SUV",   fleet: "Fleet Gamma", fuelLevel: 55, sensor: "FS-CC2", status: "idle" },
-  { id: "VH-005", plate: "KAZ 812D", make: "Mercedes",model: "Sprinter", year: 2020, type: "SUV",        fleet: "Fleet Beta",  fuelLevel: 12, sensor: "FS-DD5", status: "maintenance" },
-  { id: "VH-006", plate: "DSM 901E", make: "Mitsubishi",model: "Canter", year: 2018, type: "TRUCK",      fleet: "Fleet Gamma", fuelLevel: 0,  sensor: null,     status: "offline" },
-  { id: "VH-007", plate: "ARU 204G", make: "Nissan",  model: "Patrol",   year: 2023, type: "SUV",        fleet: "Fleet Alpha", fuelLevel: 66, sensor: "FS-EE7", status: "active" },
-  { id: "VH-008", plate: "MWA 448H", make: "Isuzu",   model: "NQR",      year: 2021, type: "TRUCK",      fleet: "Fleet Beta",  fuelLevel: 41, sensor: "FS-FF8", status: "active" },
-];
-
-const fleets = ["All Fleets", "Fleet Alpha", "Fleet Beta", "Fleet Gamma"];
-const types  = ["All Types", "TRUCK", "SUV", "SEDAN", "MOTORCYCLE"];
+import { FleetFuelApi } from "@/lib/client";
+import {
+  bootstrapFleetModule,
+  fleetOptions,
+  seedFleets,
+  seedVehicles,
+  toFrontendVehicle,
+  vehicleTypeOptions,
+} from "@/lib/fleetModule";
 
 const fuelColor = (level) => {
   if (level > 60) return "bg-success";
@@ -46,11 +39,12 @@ const fuelColor = (level) => {
 };
 
 export default function Fleet() {
-  const [vehicles, setVehicles] = useLocalStorageState("fleetfuel.vehicles", seedVehicles);
+  const [vehicles, setVehicles] = useState(seedVehicles);
   const [search, setSearch] = useState("");
   const [fleet,  setFleet]  = useState("All Fleets");
   const [type,   setType]   = useState("All Types");
-  const [selected, setSelected] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [bootstrapping, setBootstrapping] = useState(true);
   
   // Modal states
   const [registerVehicleOpen, setRegisterVehicleOpen] = useState(false);
@@ -77,6 +71,30 @@ export default function Fleet() {
     sensorId: "",
   });
 
+  useEffect(() => {
+    let active = true;
+
+    const sync = async () => {
+      try {
+        await bootstrapFleetModule();
+      } catch {
+        if (active) {
+          toast.message("Backend bootstrap skipped; using local demo state");
+        }
+      } finally {
+        if (active) {
+          setBootstrapping(false);
+        }
+      }
+    };
+
+    void sync();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return vehicles.filter((v) => {
@@ -91,74 +109,143 @@ export default function Fleet() {
     });
   }, [vehicles, search, fleet, type]);
 
-  useEffect(() => {
-    if (!selected?.id) return;
-    const updated = vehicles.find((v) => v.id === selected.id) ?? null;
-    setSelected(updated);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicles]);
+  const selected = useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === selectedId) ?? null,
+    [vehicles, selectedId]
+  );
 
   // Handler functions
-  const handleRegisterVehicle = () => {
+  const handleRegisterVehicle = async () => {
     if (!newVehicle.plate || !newVehicle.make || !newVehicle.model || !newVehicle.year) {
       toast.error("Please fill in all required fields");
       return;
     }
-    const id = `VH-${String(vehicles.length + 1).padStart(3, "0")}`;
-    const created = {
-      id,
-      plate: newVehicle.plate.trim().toUpperCase(),
-      make: newVehicle.make.trim(),
-      model: newVehicle.model.trim(),
-      year: Number(newVehicle.year),
-      type: newVehicle.type || "TRUCK",
-      fleet: newVehicle.fleet || "Fleet Alpha",
-      fuelLevel: 50,
-      sensor: null,
-      status: "active",
-    };
-    setVehicles((prev) => [created, ...prev]);
-    toast.success(`Vehicle ${created.plate} registered`);
-    setNewVehicle({ plate: "", make: "", model: "", year: "", type: "", fleet: "" });
-    setRegisterVehicleOpen(false);
+    const fleetEntry = seedFleets.find((item) => item.name === (newVehicle.fleet || "Fleet Alpha"));
+    const apiType = ({
+      TRUCK: "Truck",
+      SUV: "SUV",
+      SEDAN: "Sedan",
+      MOTORCYCLE: "Motorcycle",
+    })[newVehicle.type || "TRUCK"] ?? "Truck";
+
+    try {
+      const created = await FleetFuelApi.vehicles.register({
+        id: `VH-${String(vehicles.length + 1).padStart(3, "0")}`,
+        fleetId: fleetEntry?.id ?? null,
+        make: newVehicle.make.trim(),
+        model: newVehicle.model.trim(),
+        year: Number(newVehicle.year),
+        type: apiType,
+        licensePlate: newVehicle.plate.trim().toUpperCase(),
+      });
+
+      await FleetFuelApi.telemetry.submitReading({
+        vehicleId: created.id,
+        fuelLevel: 50,
+        timestamp: new Date().toISOString(),
+      });
+
+      const frontendVehicle = toFrontendVehicle({
+        ...created,
+        fleetId: fleetEntry?.id ?? created.fleetId,
+        readings: [{ fuelLevel: 50 }],
+      });
+
+      setVehicles((prev) => [
+        { ...frontendVehicle, fleet: fleetEntry?.name ?? frontendVehicle.fleet },
+        ...prev,
+      ]);
+      toast.success(`Vehicle ${frontendVehicle.plate} registered`);
+      setNewVehicle({ plate: "", make: "", model: "", year: "", type: "", fleet: "" });
+      setRegisterVehicleOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to register vehicle");
+    }
   };
 
-  const handleUpdateDetails = () => {
+  const handleUpdateDetails = async () => {
     if (!updateForm.fleet) {
       toast.error("Please select a fleet");
       return;
     }
     if (!selected?.id) return;
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === selected.id
-          ? { ...v, fleet: updateForm.fleet, type: updateForm.type || v.type }
-          : v
-      )
-    );
-    toast.success(`Assigned ${selected.plate} to ${updateForm.fleet}`);
-    setUpdateDetailsOpen(false);
+
+    const fleetEntry = seedFleets.find((item) => item.name === updateForm.fleet);
+    const currentVehicle = vehicles.find((vehicle) => vehicle.id === selected.id);
+    const apiType = ({
+      TRUCK: "Truck",
+      SUV: "SUV",
+      SEDAN: "Sedan",
+      MOTORCYCLE: "Motorcycle",
+    })[updateForm.type || currentVehicle?.type || "TRUCK"] ?? "Truck";
+
+    try {
+      await FleetFuelApi.vehicles.assignToFleet(selected.id, fleetEntry?.id ?? null);
+
+      if (currentVehicle && updateForm.type && updateForm.type !== currentVehicle.type) {
+        await FleetFuelApi.vehicles.update(selected.id, {
+          make: currentVehicle.make,
+          model: currentVehicle.model,
+          year: currentVehicle.year,
+          type: apiType,
+          licensePlate: currentVehicle.plate,
+        });
+      }
+
+      setVehicles((prev) =>
+        prev.map((vehicle) =>
+          vehicle.id === selected.id
+            ? {
+                ...vehicle,
+                fleet: updateForm.fleet,
+                fleetId: fleetEntry?.id ?? vehicle.fleetId,
+                type: updateForm.type || vehicle.type,
+              }
+            : vehicle
+        )
+      );
+      toast.success(`Assigned ${selected.plate} to ${updateForm.fleet}`);
+      setUpdateDetailsOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update vehicle");
+    }
   };
 
-  const handleAssignSensor = () => {
+  const handleAssignSensor = async () => {
     if (!sensorForm.sensorId) {
       toast.error("Please enter a sensor ID");
       return;
     }
     if (!selected?.id) return;
     const sensorId = sensorForm.sensorId.trim().toUpperCase();
-    setVehicles((prev) => prev.map((v) => (v.id === selected.id ? { ...v, sensor: sensorId } : v)));
-    toast.success(`Sensor ${sensorId} assigned to ${selected.plate}`);
-    setSensorForm({ sensorId: "" });
-    setAssignSensorOpen(false);
+
+    try {
+      await FleetFuelApi.vehicles.assignFuelSensor(selected.id, {
+        sensorId,
+        serialNo: sensorId,
+      });
+
+      setVehicles((prev) => prev.map((vehicle) => (vehicle.id === selected.id ? { ...vehicle, sensor: sensorId } : vehicle)));
+      toast.success(`Sensor ${sensorId} assigned to ${selected.plate}`);
+      setSensorForm({ sensorId: "" });
+      setAssignSensorOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to assign sensor");
+    }
   };
 
-  const handleRemoveVehicle = () => {
+  const handleRemoveVehicle = async () => {
     if (!selected?.id) return;
-    setVehicles((prev) => prev.filter((v) => v.id !== selected.id));
-    toast.success(`Removed ${selected.plate} from fleet`);
-    setRemoveVehicleOpen(false);
-    setSelected(null);
+
+    try {
+      await FleetFuelApi.vehicles.delete(selected.id);
+      setVehicles((prev) => prev.filter((vehicle) => vehicle.id !== selected.id));
+      toast.success(`Removed ${selected.plate} from fleet`);
+      setRemoveVehicleOpen(false);
+      setSelectedId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove vehicle");
+    }
   };
 
   return (
@@ -167,7 +254,7 @@ export default function Fleet() {
         title="Fleet Management"
         subtitle="Register, assign, and monitor all vehicles and fuel sensors"
         actions={
-          <Button size="sm" className="gap-2" onClick={() => setRegisterVehicleOpen(true)}>
+          <Button size="sm" className="gap-2" onClick={() => setRegisterVehicleOpen(true)} disabled={bootstrapping}>
             <Plus className="size-4" /> Register Vehicle
           </Button>
         }
@@ -176,11 +263,11 @@ export default function Fleet() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Vehicles", value: vehicles.length, icon: Truck, color: "text-primary" },
-          { label: "Active",    value: vehicles.filter(v=>v.status==="active").length,      icon: Fuel,         color: "text-success" },
-          { label: "Maintenance", value: vehicles.filter(v=>v.status==="maintenance").length, icon: Wrench,     color: "text-warning" },
-          { label: "Offline",   value: vehicles.filter(v=>v.status==="offline").length,     icon: WifiOff,      color: "text-destructive" },
-        ].map((s) => (
+            { label: "Total Vehicles", value: vehicles.length, icon: Truck, color: "text-primary" },
+            { label: "With Sensor", value: vehicles.filter(v=>!!v.sensor).length, icon: Fuel, color: "text-success" },
+            { label: "Without Sensor", value: vehicles.filter(v=>!v.sensor).length, icon: Wrench, color: "text-warning" },
+            { label: "Low Fuel", value: vehicles.filter(v=>v.fuelLevel < 20).length, icon: WifiOff, color: "text-destructive" },
+          ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
             <s.icon className={cn("size-5", s.color)} />
             <div>
@@ -208,11 +295,11 @@ export default function Fleet() {
               </div>
               <select value={fleet} onChange={(e) => setFleet(e.target.value)}
                 className="h-8 px-2 text-xs rounded-lg bg-muted/60 border border-transparent focus:border-ring outline-none">
-                {fleets.map(f => <option key={f}>{f}</option>)}
+                {fleetOptions.map((item) => <option key={item}>{item}</option>)}
               </select>
               <select value={type} onChange={(e) => setType(e.target.value)}
                 className="h-8 px-2 text-xs rounded-lg bg-muted/60 border border-transparent focus:border-ring outline-none">
-                {types.map(t => <option key={t}>{t}</option>)}
+                {vehicleTypeOptions.map((item) => <option key={item}>{item}</option>)}
               </select>
             </div>
           }
@@ -226,14 +313,14 @@ export default function Fleet() {
                 <th className="text-left px-5 py-3 font-medium">Fleet</th>
                 <th className="text-left px-5 py-3 font-medium">Fuel Level</th>
                 <th className="text-left px-5 py-3 font-medium">Sensor</th>
-                <th className="text-left px-5 py-3 font-medium">Status</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((v) => (
                 <tr
                   key={v.id}
-                  onClick={() => setSelected(selected?.id === v.id ? null : v)}
+                  onClick={() => setSelectedId(selectedId === v.id ? null : v.id)}
                   className="hover:bg-muted/30 transition-colors cursor-pointer"
                 >
                   <td className="px-5 py-3.5">
@@ -263,7 +350,7 @@ export default function Fleet() {
                       <span className="text-muted-foreground/50">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5"><StatusPill status={v.status} /></td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -278,13 +365,13 @@ export default function Fleet() {
                 <h4 className="font-semibold">{selected.make} {selected.model} <span className="font-mono text-sm text-muted-foreground">{selected.plate}</span></h4>
                 <p className="text-xs text-muted-foreground mt-0.5">Vehicle ID: {selected.id} · Year: {selected.year} · Type: {selected.type}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+              <button onClick={() => setSelectedId(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div><div className="text-xs text-muted-foreground mb-0.5">Fleet</div>{selected.fleet}</div>
               <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Level</div>{selected.fuelLevel}%</div>
               <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Sensor</div>{selected.sensor || "Not assigned"}</div>
-              <div><div className="text-xs text-muted-foreground mb-0.5">Status</div><StatusPill status={selected.status} /></div>
+              
             </div>
             <div className="flex gap-2 mt-4">
               <Button 
@@ -392,7 +479,7 @@ export default function Fleet() {
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Select fleet</option>
-                {fleets.filter(f => f !== "All Fleets").map(f => <option key={f} value={f}>{f}</option>)}
+                {fleetOptions.filter((item) => item !== "All Fleets").map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
           </div>
@@ -425,7 +512,7 @@ export default function Fleet() {
                 className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Select fleet</option>
-                {fleets.filter(f => f !== "All Fleets").map(f => <option key={f} value={f}>{f}</option>)}
+                {fleetOptions.filter((item) => item !== "All Fleets").map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
             <div>

@@ -14,7 +14,7 @@ export function Topbar({ onMenu }) {
       <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <input
-          placeholder="Search vehicles, suppliers, requests…"
+          placeholder="Search vehicles…"
           className="w-full h-10 pl-10 pr-16 rounded-lg bg-muted/60 border border-transparent focus:bg-card focus:border-ring outline-none text-sm transition"
         />
         <kbd className="hidden md:inline absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground border border-border rounded px-1.5 py-0.5">

@@ -16,9 +16,9 @@ npm ci
 
 Use `npm install` instead of `npm ci` only when intentionally updating dependencies.
 
-## Start Locally
+## Run Locally
 
-Start the development server with file watching:
+Development server with file watching:
 
 ```bash
 cd Backend
@@ -32,12 +32,18 @@ cd Backend
 npm start
 ```
 
-The local BFast runtime starts on port `3003` by default. Override it with `PORT`:
+The backend listens on port `3003` by default. Override it with `PORT`:
 
 ```bash
 cd Backend
 PORT=4000 npm start
 ```
+
+## Frontend Integration
+
+The frontend expects this backend at `http://localhost:3003` by default. If you run the backend on another port or host, set `VITE_API_URL` in the frontend before starting it.
+
+## Entrypoint and Discovery
 
 The backend entrypoint is `Backend/index.mjs`. It starts `bfast-function` with local functions enabled and points BFast at:
 
@@ -72,6 +78,19 @@ POST   /api/telemetry/readings
 GET    /api/fleets/:fleetId/dashboard
 ```
 
+## Run Tests
+
+```bash
+cd Backend
+npm test
+```
+
+The current test suite verifies:
+
+- BFast discovers endpoint modules directly from the Presentation folder.
+- Each endpoint lives in its own module file.
+- The in-memory backend flow persists fleet managers, fleets, vehicles, sensors, telemetry readings, and dashboard output.
+
 ## BFast Config
 
 `Backend/bfast.json` controls function discovery ignore rules:
@@ -89,19 +108,6 @@ GET    /api/fleets/:fleetId/dashboard
 
 Keep tests and support files outside endpoint descriptor exports, or add explicit ignore rules here when needed.
 
-## Run Tests
-
-```bash
-cd Backend
-npm test
-```
-
-The current test suite verifies:
-
-- BFast discovers endpoint modules directly from the Presentation folder.
-- Each endpoint lives in its own module file.
-- The in-memory backend flow persists fleet managers, fleets, vehicles, sensors, telemetry readings, and dashboard output.
-
 ## Current Persistence
 
 The infrastructure layer uses in-memory repositories that simulate the future PostgreSQL implementation. Data is reset when the Node process restarts.
@@ -112,4 +118,4 @@ The intended replacement point for PostgreSQL is:
 VehicleAndFleetTelemetryModule/Infrastructure/repositories/
 ```
 
-Keep application services depending on repository interfaces/behavior so the persistence layer can be swapped without changing endpoint modules.
+Keep application services depending on repository interfaces and behavior so the persistence layer can be swapped without changing endpoint modules.

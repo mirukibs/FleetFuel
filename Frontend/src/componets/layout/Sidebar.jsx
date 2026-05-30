@@ -1,23 +1,10 @@
-import { NavLink, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard, Truck, Store, FileStack, BarChart3,
-  FileText, ShieldCheck, Settings, Bell, Fuel, X,
-} from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Truck, Fuel, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/app/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
   { to: "/app/vehicles",      label: "Fleet",         icon: Truck },
-  { to: "/app/suppliers",     label: "Suppliers",     icon: Store },
-  { to: "/app/procurement",   label: "Procurement",   icon: FileStack },
-  { to: "/app/analytics",     label: "Analytics",     icon: BarChart3 },
-  { to: "/app/reports",       label: "Reports",       icon: FileText },
-  { to: "/app/notifications", label: "Notifications", icon: Bell },
-];
-
-const admin = [
-  { to: "/app/admin",    label: "Admin Panel", icon: ShieldCheck },
-  { to: "/app/settings", label: "Settings",    icon: Settings },
 ];
 
 function NavItem({ item, onClose }) {
@@ -87,23 +74,17 @@ export function Sidebar({ open, onClose }) {
             </ul>
           </div>
 
-          <div>
-            <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50">Administration</div>
-            <ul className="space-y-1">
-              {admin.map((item) => <NavItem key={item.to} item={item} onClose={onClose} />)}
-            </ul>
-          </div>
         </nav>
 
-        <div className="p-4 m-3 rounded-xl bg-sidebar-accent/50 border border-sidebar-border">
+        {/* <div className="p-4 m-3 rounded-xl bg-sidebar-accent/50 border border-sidebar-border">
           <div className="text-xs font-semibold text-sidebar-accent-foreground">Enterprise plan</div>
           <div className="text-[11px] text-sidebar-foreground/65 mt-1">
-            Unlimited vehicles, premium suppliers, and dedicated SLA.
+            Unlimited vehicles and dedicated SLA.
           </div>
           <button className="mt-3 w-full text-xs font-medium py-1.5 rounded-md bg-sidebar-primary text-sidebar-primary-foreground hover:opacity-90 transition">
             Manage plan
           </button>
-        </div>
+        </div> */}
       </aside>
     </>
   );

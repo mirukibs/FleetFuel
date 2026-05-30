@@ -1,29 +1,16 @@
-import { ShieldCheck, Users, Building2, Key, Plus, Trash2 } from "lucide-react";
+import { Building2, Plus, Trash2 } from "lucide-react";
 import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
-import { StatusPill } from "@/componets/ui-kit/StatusPill";
+// Status removed: UI no longer tracks user status from backend
 import { Button } from "@/componets/ui/button";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useLocalStorageState } from "@/lib/storage";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/componets/ui/dialog";
-
-const seedManagers = [
-  { id: "MGR-001", name: "Amelia Cole",    email: "amelia@fleetfuel.co", role: "Admin",    fleet: "All Fleets",   status: "active" },
-  { id: "MGR-002", name: "Joel Mwamba",    email: "joel@fleetfuel.co",   role: "Manager",  fleet: "Fleet Alpha",  status: "active" },
-  { id: "MGR-003", name: "Sara Njoroge",   email: "sara@fleetfuel.co",   role: "Manager",  fleet: "Fleet Beta",   status: "active" },
-  { id: "MGR-004", name: "Peter Kiondo",   email: "peter@fleetfuel.co",  role: "Analyst",  fleet: "Fleet Gamma",  status: "idle" },
-  { id: "MGR-005", name: "Lena Makundi",   email: "lena@fleetfuel.co",   role: "Manager",  fleet: "Fleet Beta",   status: "active" },
-];
-
-const seedFleets = [
-  { id: "FL-001", name: "Fleet Alpha", vehicles: 3, manager: "Joel Mwamba",  region: "Dar es Salaam" },
-  { id: "FL-002", name: "Fleet Beta",  vehicles: 3, manager: "Sara Njoroge", region: "Mwanza" },
-  { id: "FL-003", name: "Fleet Gamma", vehicles: 2, manager: "Peter Kiondo", region: "Arusha" },
-];
+import { FleetFuelApi } from "@/lib/client";
+import { bootstrapFleetModule, seedFleets, seedManagers, splitFullName } from "@/lib/fleetModule";
 
 export default function Admin() {
-  const [managers, setManagers] = useLocalStorageState("fleetfuel.admin.managers", seedManagers);
-  const [fleets, setFleets] = useLocalStorageState("fleetfuel.admin.fleets", seedFleets);
+  const [managers, setManagers] = useState(seedManagers);
+  const [fleets, setFleets] = useState(seedFleets);
   const [addManagerOpen, setAddManagerOpen] = useState(false);
   const [createFleetOpen, setCreateFleetOpen] = useState(false);
 
@@ -32,7 +19,6 @@ export default function Admin() {
     email: "",
     role: "Manager",
     fleet: "All Fleets",
-    status: "active",
   });
 
   const [fleetForm, setFleetForm] = useState({
@@ -46,44 +32,75 @@ export default function Admin() {
     [fleets]
   );
 
+  useEffect(() => {
+    void bootstrapFleetModule().catch(() => null);
+  }, []);
+
   const createManagerId = () => `MGR-${String(managers.length + 1).padStart(3, "0")}`;
   const createFleetId = () => `FL-${String(fleets.length + 1).padStart(3, "0")}`;
 
-  const handleAddManager = () => {
+  const handleAddManager = async () => {
     if (!managerForm.name.trim() || !managerForm.email.trim()) {
       toast.error("Please provide name and email");
       return;
     }
-    const created = {
-      id: createManagerId(),
-      name: managerForm.name.trim(),
-      email: managerForm.email.trim(),
-      role: managerForm.role,
-      fleet: managerForm.fleet,
-      status: managerForm.status,
-    };
-    setManagers((prev) => [created, ...prev]);
-    toast.success(`Manager "${created.name}" added`);
-    setAddManagerOpen(false);
-    setManagerForm({ name: "", email: "", role: "Manager", fleet: "All Fleets", status: "active" });
+    try {
+      const { firstName, lastName } = splitFullName(managerForm.name.trim());
+      const created = await FleetFuelApi.managers.create({
+        id: createManagerId(),
+        firstName,
+        lastName,
+        email: managerForm.email.trim(),
+      });
+
+      setManagers((prev) => [
+        {
+          id: created.id,
+          name: created.fullName ?? managerForm.name.trim(),
+          email: created.email ?? managerForm.email.trim(),
+          role: managerForm.role,
+          fleet: managerForm.fleet,
+        },
+        ...prev,
+      ]);
+      toast.success(`Manager "${created.fullName ?? managerForm.name.trim()}" added`);
+      setAddManagerOpen(false);
+      setManagerForm({ name: "", email: "", role: "Manager", fleet: "All Fleets" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add manager");
+    }
   };
 
-  const handleCreateFleet = () => {
+  const handleCreateFleet = async () => {
     if (!fleetForm.name.trim() || !fleetForm.region.trim() || !fleetForm.manager.trim()) {
       toast.error("Please fill fleet name, region, and manager");
       return;
     }
-    const created = {
-      id: createFleetId(),
-      name: fleetForm.name.trim(),
-      vehicles: 0,
-      manager: fleetForm.manager.trim(),
-      region: fleetForm.region.trim(),
-    };
-    setFleets((prev) => [created, ...prev]);
-    toast.success(`Fleet "${created.name}" created`);
-    setCreateFleetOpen(false);
-    setFleetForm({ name: "", region: "", manager: "" });
+    try {
+      const managerRecord = managers.find((manager) => manager.name === fleetForm.manager.trim());
+      const created = await FleetFuelApi.fleets.create({
+        id: createFleetId(),
+        name: fleetForm.name.trim(),
+        fleetManagerId: managerRecord?.id ?? null,
+      });
+
+      setFleets((prev) => [
+        {
+          id: created.id,
+          name: created.name ?? fleetForm.name.trim(),
+          vehicles: 0,
+          manager: fleetForm.manager.trim(),
+          region: fleetForm.region.trim(),
+          fleetManagerId: created.fleetManagerId ?? managerRecord?.id ?? null,
+        },
+        ...prev,
+      ]);
+      toast.success(`Fleet "${created.name ?? fleetForm.name.trim()}" created`);
+      setCreateFleetOpen(false);
+      setFleetForm({ name: "", region: "", manager: "" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create fleet");
+    }
   };
 
   const handleDeleteFleet = (id) => {
@@ -122,7 +139,6 @@ export default function Admin() {
                   <div className="text-xs text-muted-foreground truncate">{m.email} · {m.fleet}</div>
                 </div>
                 <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground">{m.role}</span>
-                <StatusPill status={m.status} />
               </div>
             ))}
           </div>
@@ -232,18 +248,7 @@ export default function Admin() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
-                <select
-                  value={managerForm.status}
-                  onChange={(e) => setManagerForm((f) => ({ ...f, status: e.target.value }))}
-                  className="w-full h-9 px-3 text-sm rounded-lg bg-muted/60 border border-border focus:border-ring outline-none"
-                >
-                  <option value="active">active</option>
-                  <option value="idle">idle</option>
-                  <option value="offline">offline</option>
-                </select>
-              </div>
+              {/* Status removed */}
             </div>
           </div>
           <DialogFooter>

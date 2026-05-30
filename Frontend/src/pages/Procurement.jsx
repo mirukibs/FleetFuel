@@ -1,26 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileStack, Plus, CheckCircle, Clock, XCircle, ChevronRight } from "lucide-react";
 import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
-import { StatusPill } from "@/componets/ui-kit/StatusPill";
 import { Button } from "@/componets/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLocalStorageState } from "@/lib/storage";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/componets/ui/dialog";
-
-const seedRequests = [
-  { id: "PR-2026-001", fleet: "Fleet Alpha", vehicle: "Isuzu FVR – KAZ 421B",  supplier: "Total Energies",  litres: 300, estimatedCost: "$444.00", status: "approved",  date: "2026-05-20", approvedBy: "Amelia Cole" },
-  { id: "PR-2026-002", fleet: "Fleet Beta",  vehicle: "Toyota HiAce – DAR 087C", supplier: "Shell Tanzania", litres: 120, estimatedCost: "$182.40", status: "pending",   date: "2026-05-23", approvedBy: null },
-  { id: "PR-2026-003", fleet: "Fleet Gamma", vehicle: "Toyota LC – MOR 155F",   supplier: "Oryx Energy",     litres: 80,  estimatedCost: "$115.20", status: "fulfilled", date: "2026-05-18", approvedBy: "Amelia Cole" },
-  { id: "PR-2026-004", fleet: "Fleet Alpha", vehicle: "Scania P360 – TZN 330A", supplier: "Total Energies",  litres: 500, estimatedCost: "$740.00", status: "pending",   date: "2026-05-24", approvedBy: null },
-  { id: "PR-2026-005", fleet: "Fleet Beta",  vehicle: "Mercedes Sprinter – KAZ 812D", supplier: "BP Tanzania", litres: 90, estimatedCost: "$139.50", status: "rejected", date: "2026-05-19", approvedBy: "Amelia Cole" },
-  { id: "PR-2026-006", fleet: "Fleet Gamma", vehicle: "Nissan Patrol – ARU 204G", supplier: "Oryx Energy",   litres: 150, estimatedCost: "$216.00", status: "approved",  date: "2026-05-22", approvedBy: "Amelia Cole" },
-];
-
-const steps = ["Request Submitted", "Under Review", "Approved", "Fuelling Scheduled", "Fulfilled"];
-
-const statusStep = { pending: 1, approved: 2, fulfilled: 4, rejected: -1 };
-
+                <div>
+  { id: "PR-2026-004", fleet: "Fleet Alpha", vehicle: "Scania P360 – TZN 330A", supplier: "Total Energies",  litres: 500, estimatedCost: "$740.00", date: "2026-05-24", approvedBy: null },
+                  <div className="font-medium">{selected.approvedBy || "—"}</div>
+  { id: "PR-2026-006", fleet: "Fleet Gamma", vehicle: "Nissan Patrol – ARU 204G", supplier: "Oryx Energy",   litres: 150, estimatedCost: "$216.00", date: "2026-05-22", approvedBy: "Amelia Cole" },
+                
 export default function Procurement() {
   const [requests, setRequests] = useLocalStorageState("fleetfuel.procurement.requests", seedRequests);
   const [filter, setFilter] = useState("all");
@@ -35,10 +25,7 @@ export default function Procurement() {
     litres: "",
   });
 
-  const filtered = useMemo(
-    () => (filter === "all" ? requests : requests.filter((r) => r.status === filter)),
-    [requests, filter]
-  );
+  const filtered = useMemo(() => requests, [requests]);
 
   useEffect(() => {
     if (!selected?.id) return;
@@ -46,11 +33,7 @@ export default function Procurement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests]);
 
-  const counts = useMemo(() => {
-    const by = { all: requests.length, pending: 0, approved: 0, fulfilled: 0, rejected: 0 };
-    for (const r of requests) by[r.status] = (by[r.status] ?? 0) + 1;
-    return by;
-  }, [requests]);
+  const counts = useMemo(() => ({ all: requests.length }), [requests]);
 
   const makeId = () => {
     const seq = String(requests.length + 1).padStart(3, "0");
@@ -76,7 +59,6 @@ export default function Procurement() {
       supplier: form.supplier,
       litres,
       estimatedCost: estimateCost(litres),
-      status: "pending",
       date: new Date().toISOString().slice(0, 10),
       approvedBy: null,
     };
@@ -87,17 +69,8 @@ export default function Procurement() {
   };
 
   const handleApprove = (id) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: "approved", approvedBy: "Amelia Cole" } : r
-      )
-    );
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, approvedBy: "Amelia Cole" } : r)));
     toast.success(`Approved ${id}`);
-  };
-
-  const handleReject = (id) => {
-    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r)));
-    toast.message(`Rejected ${id}`);
   };
 
   return (
@@ -165,21 +138,7 @@ export default function Procurement() {
         </Card>
       )}
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 bg-muted/40 rounded-xl p-1 w-fit">
-        {["all","pending","approved","fulfilled","rejected"].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all",
-              filter === f ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {f} {`(${counts[f] ?? 0})`}
-          </button>
-        ))}
-      </div>
+      {/* Status tabs removed; showing all requests */}
 
       <div className="space-y-3">
         {filtered.map(r => (
@@ -201,58 +160,13 @@ export default function Procurement() {
                 <div className="font-semibold text-sm">{r.estimatedCost}</div>
                 <div className="text-xs text-muted-foreground">{r.litres} L</div>
               </div>
-              <StatusPill status={r.status} />
+              <div className="text-xs text-muted-foreground">{r.approvedBy ? 'Approved' : 'Pending'}</div>
               <ChevronRight className={cn("size-4 text-muted-foreground transition-transform shrink-0", selected?.id===r.id && "rotate-90")} />
             </div>
 
-            {selected?.id === r.id && r.status !== "rejected" && (
+            {selected?.id === r.id && (
               <div className="px-5 pb-5 animate-slide-up">
-                {/* Progress steps */}
-                <div className="flex items-center gap-0">
-                  {steps.map((step, i) => {
-                    const active = i <= (statusStep[r.status] ?? 0);
-                    return (
-                      <div key={step} className="flex items-center flex-1 last:flex-none">
-                        <div className={cn(
-                          "size-6 rounded-full border-2 flex items-center justify-center shrink-0 text-[10px] font-bold transition-all",
-                          active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"
-                        )}>{i+1}</div>
-                        {i < steps.length - 1 && (
-                          <div className={cn("flex-1 h-0.5 mx-1", active && i < (statusStep[r.status]??0) ? "bg-primary" : "bg-border")} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between mt-1">
-                  {steps.map(s => <div key={s} className="text-[9px] text-muted-foreground text-center flex-1 last:flex-none">{s.split(" ")[0]}</div>)}
-                </div>
                 <div className="flex gap-2 mt-4">
-                  {r.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        className="text-xs gap-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(r.id);
-                        }}
-                      >
-                        <CheckCircle className="size-3" /> Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs gap-1 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleReject(r.id);
-                        }}
-                      >
-                        <XCircle className="size-3" /> Reject
-                      </Button>
-                    </>
-                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -302,10 +216,7 @@ export default function Procurement() {
                   <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Estimated Cost</div>
                   <div className="font-medium">{selected.estimatedCost}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</div>
-                  <StatusPill status={selected.status} />
-                </div>
+                
                 <div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Approved By</div>
                   <div className="font-medium">{selected.approvedBy || "—"}</div>
