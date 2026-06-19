@@ -1,0 +1,146 @@
+@startuml
+skinparam titleFontSize 18
+title Fuel Procurement Module - Domain Model
+
+Package "Fuel Procurement Module" {
+    Package "Domain" {
+        Package "Entities" {
+            Class ProcurementRequest {
+                - id: string
+                - fleetCompanyId: string
+                - fuelSupplierId: string
+                - fuelType: FuelType
+                - fuelQuantityLitres: int
+                - unitPrice: double
+                - procurementStatus: ProcurementRequestStatus
+                - createdAt: Date
+                - updatedAt: Date
+                --
+                + {static} create(fleetCompanyId: string, fuelSupplierId: string, fuelType: FuelType, fuelQuantityLitres: int, unitPrice: double, totalCost: double): ProcurementRequest
+                + submit(): void
+                + accept(): void
+                + reject(): void
+                + fulfill(): void
+                + updateDetails(fuelQuantityLitres: int, unitPrice: double, totalCost: double): void
+                + getFuelType(): FuelType
+                + getFuelQuantityLitres(): int
+                + getUnitPrice(): double
+                + getTotalCost(): double
+            }
+
+            note right of ProcurementRequest
+                <b>Transition Guards & Business Rules:</b>
+                * submit()   -> [DRAFT -> SUBMITTED]
+                * accept()   -> [SUBMITTED -> ACCEPTED]
+                * reject()   -> [SUBMITTED -> REJECTED]
+                * fulfill()  -> [ACCEPTED -> FULFILLED]
+                
+                <i>Validation Guard:</i>
+                [REJECTED -> ACCEPTED] is invalid and must fail.
+            end note
+
+            note left of ProcurementRequest
+                <b>Deriving Total Cost:</b>
+                - Total cost is derived from fuel quantity and unit price, not set directly.
+                 This ensures data integrity and consistency in the domain model.
+                - Total cost = fuelQuantityLitres * unitPrice
+                - Total cost is therefore accessed via a getter method <i>getTotalCost()</i>.
+            end note
+            
+            Class FleetCompany {
+                - id: string
+                - companyName: string
+                - contactPerson: string
+                - email: string
+                - phoneNumber: string
+                - createdAt: Date
+                - updatedAt: Date
+                --
+                + {static} create(companyName: string, contactPerson: string, email: string, phoneNumber: string): FleetCompany
+                + updateDetails(companyName: string, contactPerson: string, email: string, phoneNumber: string): void
+                + getCompanyName(): string
+                + getContactPerson(): string
+                + getEmail(): string
+                + getPhoneNumber(): string
+            }
+
+            Class FuelSupplier {
+                - id: string
+                - supplierName: string
+                - contactPerson: string
+                - email: string
+                - phoneNumber: string
+                - fuelOffer: FuelOffer[]
+                - createdAt: Date
+                - updatedAt: Date
+                --
+                + {static} create(supplierName: string, contactPerson: string, email: string, phoneNumber: string): FuelSupplier
+                + updateDetails(supplierName: string, contactPerson: string, email: string, phoneNumber: string): void
+                + getSupplierName(): string
+                + getContactPerson(): string
+                + getEmail(): string
+                + getPhoneNumber(): string
+                + getFuelOffers(): FuelOffer[]
+                + addFuelOffer(fuelOffer: FuelOffer): void
+                + removeFuelOffer(fuelOffer: FuelOffer): void
+            }
+
+            ' Relationships
+            ProcurementRequest ..> FleetCompany : references by fleetCompanyId
+            ProcurementRequest ..> FuelSupplier : references by fuelSupplierId
+        }
+
+        Package "Value Objects" {
+            Class FuelOffer {
+                - fuelType: FuelType
+                - pricePerUnit: double
+                - availableQuantityLitres: int
+                - minimumOrderQuantityLitres: int
+                --
+                + {static} create(fuelType: FuelType, pricePerUnit: double, availableQuantityLitres: int, minimumOrderQuantityLitres: int): FuelOffer
+                + updateDetails(fuelType: FuelType, pricePerUnit: double, availableQuantityLitres: int, minimumOrderQuantityLitres: int): void
+                + getFuelType(): FuelType
+                + getPricePerUnit(): double
+                + getAvailableQuantityLitres(): int
+                + getMinimumOrderQuantityLitres(): int
+            }
+        }
+
+        FuelOffer --o ProcurementRequest : has <
+
+        Package "Enums" {
+            Enum FuelType {
+                DIESEL
+                PETROL
+            }
+
+            Enum ProcurementRequestStatus {
+                DRAFT
+                SUBMITTED
+                ACCEPTED
+                REJECTED
+                FULFILLED
+            }
+        }
+
+        Package "Repositories" {
+            Interface ProcurementRequestRepository {
+                + save(procurementRequest: ProcurementRequest): void
+                + findById(id: string): ProcurementRequest
+                + findByFleetCompanyId(fleetCompanyId: string): ProcurementRequest[]
+                + findByFuelSupplierId(fuelSupplierId: string): ProcurementRequest[]
+            }
+
+            Interface FleetCompanyRepository {
+                + save(fleetCompany: FleetCompany): void
+                + findById(id: string): FleetCompany
+                + findAll(): FleetCompany[]
+            }
+
+            Interface FuelSupplierRepository {
+                + save(fuelSupplier: FuelSupplier): void
+                + findById(id: string): FuelSupplier
+                + findAll(): FuelSupplier[]
+            }
+    }
+}
