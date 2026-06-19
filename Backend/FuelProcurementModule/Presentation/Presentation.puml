@@ -1,0 +1,98 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Fuel Procurement Module Presentation Layer Design
+
+Package FuelProcurementModule {
+
+    ' --- APPLICATION LAYER (For Context) ---
+    Package Application {
+        Package Services {
+            Class FleetCompanyApplicationService
+            Class FuelSupplierApplicationService
+            Class ProcurementApplicationService
+        }
+    }
+
+    ' --- PRESENTATION LAYER ---
+    Package Presentation {
+
+        Package Controllers {
+
+            Class FleetCompanyController {
+                - companyService: FleetCompanyApplicationService
+                ---
+                + registerCompany(req: HTTPRequest): HTTPResponse
+                  [POST /api/fleet-companies]
+
+                + updateCompany(id: string, req: HTTPRequest): HTTPResponse
+                  [PUT /api/fleet-companies/{id}]
+
+                + getFuelSuppliers(): HTTPResponse
+                  [GET /api/fuel-suppliers]
+
+                + getSupplierOffers(id: string): HTTPResponse
+                  [GET /api/fuel-suppliers/{id}/offers]
+
+                + compareFuelPrices(fuelType: string): HTTPResponse
+                  [GET /api/fuel-offers/compare]
+            }
+
+            Class FuelSupplierController {
+                - supplierService: FuelSupplierApplicationService
+                ---
+                + registerSupplier(req: HTTPRequest): HTTPResponse
+                  [POST /api/fuel-suppliers]
+
+                + updateSupplier(id: string, req: HTTPRequest): HTTPResponse
+                  [PUT /api/fuel-suppliers/{id}]
+
+                + addFuelOffer(id: string, req: HTTPRequest): HTTPResponse
+                  [POST /api/fuel-suppliers/{id}/offers]
+
+                + updateFuelOffer(id: string, fuelType: string, req: HTTPRequest): HTTPResponse
+                  [PUT /api/fuel-suppliers/{id}/offers/{fuelType}]
+
+                + removeFuelOffer(supplierId: string, fuelType: string): HTTPResponse
+                  [DELETE /api/fuel-suppliers/{id}/offers/{fuelType}]
+            }
+
+            Class ProcurementController {
+                - procurementService: ProcurementApplicationService
+                ---
+                + createRequest(req: HTTPRequest): HTTPResponse
+                  [POST /api/procurement-requests]
+
+                + updateRequest(id: string, req: HTTPRequest): HTTPResponse
+                  [PUT /api/procurement-requests/{id}]
+
+                + getProcurementRequests(): HTTPResponse
+                  [GET /api/procurement-requests]
+
+                + submitRequest(id: string): HTTPResponse
+                  [POST /api/procurement-requests/{id}/submit]
+
+                + getRequestStatus(id: string): HTTPResponse
+                  [GET /api/procurement-requests/{id}/status]
+
+                + acceptRequest(id: string): HTTPResponse
+                  [POST /api/procurement-requests/{id}/accept]
+
+                + rejectRequest(id: string): HTTPResponse
+                  [POST /api/procurement-requests/{id}/reject]
+
+                + fulfillRequest(id: string): HTTPResponse
+                  [POST /api/procurement-requests/{id}/fulfill]
+            }
+        }
+    }
+
+    ' Controllers call Application Services
+
+    FleetCompanyController --> FleetCompanyApplicationService
+
+    FuelSupplierController --> FuelSupplierApplicationService
+
+    ProcurementController --> ProcurementApplicationService
+}
+@enduml

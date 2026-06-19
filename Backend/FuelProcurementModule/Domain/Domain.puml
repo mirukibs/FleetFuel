@@ -16,12 +16,12 @@ Package "Fuel Procurement Module" {
                 - createdAt: Date
                 - updatedAt: Date
                 --
-                + {static} create(fleetCompanyId: string, fuelSupplierId: string, fuelType: FuelType, fuelQuantityLitres: int, unitPrice: double, totalCost: double): ProcurementRequest
+                + {static} create(fleetCompanyId: string, fuelSupplierId: string, fuelType: FuelType, fuelQuantityLitres: int, unitPrice: double): ProcurementRequest
                 + submit(): void
                 + accept(): void
                 + reject(): void
                 + fulfill(): void
-                + updateDetails(fuelQuantityLitres: int, unitPrice: double, totalCost: double): void
+                + updateDetails(fuelQuantityLitres: int, unitPrice: double): void
                 + getFuelType(): FuelType
                 + getFuelQuantityLitres(): int
                 + getUnitPrice(): double
@@ -105,8 +105,6 @@ Package "Fuel Procurement Module" {
                 + getMinimumOrderQuantityLitres(): int
             }
         }
-
-        FuelOffer --o ProcurementRequest : has <
 
         Package "Enums" {
             Enum FuelType {
