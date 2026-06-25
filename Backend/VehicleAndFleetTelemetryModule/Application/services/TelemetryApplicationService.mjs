@@ -37,4 +37,18 @@ export class TelemetryApplicationService {
       vehicles
     };
   }
+
+  listVehicleTelemetryReadings(vehicleId) {
+    const vehicle = this.vehicleRepo.findById(vehicleId);
+    return vehicle.readings;
+  }
+
+  listTelemetryReadings({vehicleId} = {}) {
+    if (vehicleId) {
+      return this.listVehicleTelemetryReadings(vehicleId);
+    }
+    return this.vehicleRepo
+      .findAll()
+      .flatMap((vehicle) => vehicle.readings);
+  }
 }

@@ -15,7 +15,17 @@ export class InMemoryVehicleRepository {
     return vehicle;
   }
 
+  findAll() {
+    return [...inMemoryDatabase.vehicles.values()];
+  }
+
   findByFleetId(fleetId) {
     return [...inMemoryDatabase.vehicles.values()].filter((vehicle) => vehicle.fleetId === fleetId);
+  }
+
+  delete(id) {
+    const vehicle = this.findById(id);
+    inMemoryDatabase.vehicles.delete(id);
+    return vehicle;
   }
 }

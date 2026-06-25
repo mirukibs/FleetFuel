@@ -23,6 +23,19 @@ export class VehicleApplicationService {
     return this.vehicleRepo.save(vehicle).toJSON();
   }
 
+  listVehicles() {
+    return this.vehicleRepo.findAll().map((vehicle) => vehicle.toJSON());
+  }
+
+  listVehiclesByFleet(fleetId) {
+    this.fleetRepo.findById(fleetId);
+    return this.vehicleRepo.findByFleetId(fleetId).map((vehicle) => vehicle.toJSON());
+  }
+
+  getVehicle(id) {
+    return this.vehicleRepo.findById(id).toJSON();
+  }
+
   updateVehicleDetails(id, input) {
     const vehicle = this.vehicleRepo.findById(id);
     vehicle.updateDetails({
@@ -44,6 +57,14 @@ export class VehicleApplicationService {
     const vehicle = this.vehicleRepo.findById(vehicleId);
     vehicle.removeFromFleet();
     return this.vehicleRepo.save(vehicle).toJSON();
+  }
+
+  deleteVehicle(vehicleId) {
+    const vehicle = this.vehicleRepo.delete(vehicleId);
+    return {
+      id: vehicle.id,
+      deleted: true
+    };
   }
 
   assignFuelSensor(vehicleId, sensorId, serialNo) {

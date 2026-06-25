@@ -61,14 +61,24 @@ Expected discovered application endpoints include:
 
 ```text
 POST   /api/managers
+GET    /api/managers
+GET    /api/managers/:id
 POST   /api/fleets
+GET    /api/fleets
+GET    /api/fleets/:id
+GET    /api/fleets/:fleetId/vehicles
 PUT    /api/fleets/:id/name
 POST   /api/vehicles
+GET    /api/vehicles
+GET    /api/vehicles/:id
 PUT    /api/vehicles/:id
 POST   /api/vehicles/:id/fleet
+DELETE /api/vehicles/:id/fleet
 DELETE /api/vehicles/:id
 POST   /api/vehicles/:id/fuel-sensor
 POST   /api/telemetry/readings
+GET    /api/telemetry/readings
+GET    /api/vehicles/:id/telemetry/readings
 GET    /api/fleets/:fleetId/dashboard
 ```
 
