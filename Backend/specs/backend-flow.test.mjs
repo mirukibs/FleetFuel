@@ -18,6 +18,8 @@ import {listVehicles} from '../VehicleAndFleetTelemetryModule/Presentation/contr
 import {registerVehicle} from '../VehicleAndFleetTelemetryModule/Presentation/controllers/vehicle/registerVehicle.mjs';
 import {removeVehicleFromFleet} from '../VehicleAndFleetTelemetryModule/Presentation/controllers/vehicle/removeVehicleFromFleet.mjs';
 import {resetInMemoryDatabase} from '../VehicleAndFleetTelemetryModule/Infrastructure/database/inMemoryDatabase.mjs';
+import {FuelSensor} from '../VehicleAndFleetTelemetryModule/Domain/entities/FuelSensor.mjs';
+import {FuelSensorReading} from '../VehicleAndFleetTelemetryModule/Domain/entities/FuelSensorReading.mjs';
 
 const createResponse = () => {
   const response = {
@@ -88,6 +90,7 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
   });
   assert.equal(sensor.statusCode, 200);
   assert.equal(sensor.body.sensor.serialNo, 'FF-SENSOR-001');
+  assert.equal(sensor.body.sensor.entityType, 'FuelSensor');
 
   const reading = await invoke(receiveSimulatedReading, {
     body: {
@@ -98,6 +101,7 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
   });
   assert.equal(reading.statusCode, 201);
   assert.equal(reading.body.fuelLevel, 62.5);
+  assert.equal(reading.body.entityType, 'FuelSensorReading');
   assert.equal(reading.body.alertTriggered, false);
 
   const dashboard = await invoke(getFleetDashboard, {
@@ -187,4 +191,23 @@ test('endpoint handlers return validation errors instead of not-implemented resp
 
   assert.equal(response.statusCode, 400);
   assert.equal(response.body.error, 'ValidationError');
+});
+
+test('fuel sensor and fuel sensor reading are explicit domain entities', () => {
+  const sensor = new FuelSensor({
+    id: 'sensor-001',
+    serialNo: 'FF-SENSOR-001'
+  });
+  const reading = new FuelSensorReading({
+    id: 'reading-001',
+    vehicleId: 'vehicle-001',
+    fuelLevel: 62.5,
+    timestamp: '2026-05-24T18:57:21.121Z'
+  });
+
+  assert.equal(sensor.getId(), 'sensor-001');
+  assert.equal(sensor.getSerialNo(), 'FF-SENSOR-001');
+  assert.equal(sensor.toJSON().entityType, 'FuelSensor');
+  assert.equal(reading.getFuelLevel(), 62.5);
+  assert.equal(reading.toJSON().entityType, 'FuelSensorReading');
 });
