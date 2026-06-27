@@ -10,21 +10,31 @@ Our controllers are:
 **1. Fleet controller**
 - Exposes API endpoints according to the fleet use cases defined in the application layer:
 	1. Create fleet -  *[POST /api/fleets]*
-	2. Update fleet name - *[PUT /api/fleets/:id/name]*
+	2. List fleets - *[GET /api/fleets]*
+	3. View fleet details - *[GET /api/fleets/:id]*
+	4. List fleet vehicles - *[GET /api/fleets/:fleetId/vehicles]*
+	5. Update fleet name - *[PUT /api/fleets/:id/name]*
 
 **2. Fleet manager controller**
 - Exposes API endpoints according to the fleet manager use cases defined in the application layer:
 	1. Create manager - *[POST /api/managers]*
+	2. List managers - *[GET /api/managers]*
+	3. View manager details - *[GET /api/managers/:id]*
 
 **3. Vehicle controller**
 - Exposes API endpoints according to the vehicle use cases defined in the application layer:
 	1. Register vehicle - *[POST /api/vehicles]*
-	2. Update vehicle details - *[PUT /api/vehicles/:id]*
-	3. Assign vehicle to fleet - *[POST /api/vehicles/:id/fleet]*
-	4. Remove vehicle from fleet - *[Delete /api/vehicles/:id]*
-	5. Assign fuel sensor - *[POST /api/vehicles/:id/fuel-sensor]*
+	2. List vehicles - *[GET /api/vehicles]*
+	3. View vehicle details - *[GET /api/vehicles/:id]*
+	4. Update vehicle details - *[PUT /api/vehicles/:id]*
+	5. Assign vehicle to fleet - *[POST /api/vehicles/:id/fleet]*
+	6. Remove vehicle from fleet - *[Delete /api/vehicles/:id/fleet]*
+	7. Delete vehicle - *[Delete /api/vehicles/:id]*
+	8. Assign fuel sensor - *[POST /api/vehicles/:id/fuel-sensor]*
 
 **4. Telemetry controller**
 - Exposes API endpoints according to the telemetry use cases defined in the application layer:
 	1. Receive simulated fuel reading - *[POST /api/telemetry/readings]*
-	2. View fuel efficiency dashboard - *[GET /api/fleets/:fleetId/dashboard]*
+	2. List telemetry readings - *[GET /api/telemetry/readings]*
+	3. List vehicle telemetry readings - *[GET /api/vehicles/:id/telemetry/readings]*
+	4. View fuel efficiency dashboard - *[GET /api/fleets/:fleetId/dashboard]*

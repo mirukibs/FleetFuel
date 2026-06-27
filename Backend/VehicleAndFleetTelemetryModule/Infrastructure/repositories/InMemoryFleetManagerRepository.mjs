@@ -14,4 +14,8 @@ export class InMemoryFleetManagerRepository {
     }
     return manager;
   }
+
+  findAll() {
+    return [...inMemoryDatabase.fleetManagers.values()];
+  }
 }
