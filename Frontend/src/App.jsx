@@ -4,6 +4,7 @@ import { AppShell } from "@/componets/layout/AppShell";
 // Pages
 import Dashboard from "@/pages/Dashboard";
 import Fleet from "@/pages/Fleet";
+import Admin from "@/pages/Admin";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
               <Routes>
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="vehicles" element={<Fleet />} />
+                <Route path="admin" element={<Admin />} />
                 <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AppShell>
