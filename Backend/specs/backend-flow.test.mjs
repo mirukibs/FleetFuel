@@ -84,12 +84,12 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
   const sensor = await invoke(assignFuelSensor, {
     params: {id: 'vehicle-001'},
     body: {
-      sensorId: 'sensor-001',
-      serialNo: 'FF-SENSOR-001'
+      sensorId: 'FS-1234',
+      serialNo: 'FS-1234'
     }
   });
   assert.equal(sensor.statusCode, 200);
-  assert.equal(sensor.body.sensor.serialNo, 'FF-SENSOR-001');
+  assert.equal(sensor.body.sensor.serialNo, 'FS-1234');
   assert.equal(sensor.body.sensor.entityType, 'FuelSensor');
 
   const reading = await invoke(receiveSimulatedReading, {
@@ -140,7 +140,7 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
     params: {id: 'vehicle-001'}
   });
   assert.equal(vehicleDetail.statusCode, 200);
-  assert.equal(vehicleDetail.body.sensor.serialNo, 'FF-SENSOR-001');
+  assert.equal(vehicleDetail.body.sensor.serialNo, 'FS-1234');
 
   const fleetVehicles = await invoke(listFleetVehicles, {
     params: {fleetId: 'fleet-001'}
@@ -195,8 +195,8 @@ test('endpoint handlers return validation errors instead of not-implemented resp
 
 test('fuel sensor and fuel sensor reading are explicit domain entities', () => {
   const sensor = new FuelSensor({
-    id: 'sensor-001',
-    serialNo: 'FF-SENSOR-001'
+    id: 'FS-1234',
+    serialNo: 'FS-1234'
   });
   const reading = new FuelSensorReading({
     id: 'reading-001',
@@ -205,8 +205,8 @@ test('fuel sensor and fuel sensor reading are explicit domain entities', () => {
     timestamp: '2026-05-24T18:57:21.121Z'
   });
 
-  assert.equal(sensor.getId(), 'sensor-001');
-  assert.equal(sensor.getSerialNo(), 'FF-SENSOR-001');
+  assert.equal(sensor.getId(), 'FS-1234');
+  assert.equal(sensor.getSerialNo(), 'FS-1234');
   assert.equal(sensor.toJSON().entityType, 'FuelSensor');
   assert.equal(reading.getFuelLevel(), 62.5);
   assert.equal(reading.toJSON().entityType, 'FuelSensorReading');

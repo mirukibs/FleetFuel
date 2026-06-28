@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import { Truck, Plus, Search, Fuel, Wrench, WifiOff, AlertTriangle, AlertCircle } from "lucide-react";
 import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
 import { Button } from "@/componets/ui/button";
@@ -24,10 +24,6 @@ import {
 import { cn } from "@/lib/utils";
 import { FleetFuelApi } from "@/lib/client";
 import {
-  bootstrapFleetModule,
-  fleetOptions,
-  seedFleets,
-  seedVehicles,
   toFrontendVehicle,
   vehicleTypeOptions,
 } from "@/lib/fleetModule";
@@ -39,20 +35,26 @@ const fuelColor = (level) => {
 };
 
 export default function Fleet() {
-  const [vehicles, setVehicles] = useState(seedVehicles);
+  const [vehicles, setVehicles] = useState([]);
+  const [fleets, setFleets] = useState([]);
   const [search, setSearch] = useState("");
   const [fleet,  setFleet]  = useState("All Fleets");
   const [type,   setType]   = useState("All Types");
   const [selectedId, setSelectedId] = useState(null);
   const [bootstrapping, setBootstrapping] = useState(true);
+
+  const fleetOptions = useMemo(() => ["All Fleets", ...fleets.map((f) => f.name)], [fleets]);
   
   // Modal states
   const [registerVehicleOpen, setRegisterVehicleOpen] = useState(false);
   const [updateDetailsOpen, setUpdateDetailsOpen] = useState(false);
   const [assignSensorOpen, setAssignSensorOpen] = useState(false);
   const [removeVehicleOpen, setRemoveVehicleOpen] = useState(false);
-  
-  // Form states
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
+
+  // Form & view states
+  const [telemetryHistory, setTelemetryHistory] = useState([]);
+  const [vehicleDetails, setVehicleDetails] = useState(null);
   const [newVehicle, setNewVehicle] = useState({
     plate: "",
     make: "",
@@ -73,26 +75,24 @@ export default function Fleet() {
 
   useEffect(() => {
     let active = true;
-
-    const sync = async () => {
+    async function loadData() {
       try {
-        await bootstrapFleetModule();
-      } catch {
+        const [loadedVehicles, loadedFleets] = await Promise.all([
+          FleetFuelApi.vehicles.list(),
+          FleetFuelApi.fleets.list(),
+        ]);
         if (active) {
-          toast.message("Backend bootstrap skipped; using local demo state");
+          setFleets(loadedFleets || []);
+          setVehicles((loadedVehicles || []).map((v) => toFrontendVehicle(v, loadedFleets || [])));
         }
+      } catch (err) {
+        if (active) toast.error("Failed to load vehicle data");
       } finally {
-        if (active) {
-          setBootstrapping(false);
-        }
+        if (active) setBootstrapping(false);
       }
-    };
-
-    void sync();
-
-    return () => {
-      active = false;
-    };
+    }
+    loadData();
+    return () => { active = false; };
   }, []);
 
   const filtered = useMemo(() => {
@@ -120,7 +120,7 @@ export default function Fleet() {
       toast.error("Please fill in all required fields");
       return;
     }
-    const fleetEntry = seedFleets.find((item) => item.name === (newVehicle.fleet || "Fleet Alpha"));
+    const fleetEntry = fleets.find((item) => item.name === (newVehicle.fleet || "Fleet Alpha"));
     const apiType = ({
       TRUCK: "Truck",
       SUV: "SUV",
@@ -139,17 +139,13 @@ export default function Fleet() {
         licensePlate: newVehicle.plate.trim().toUpperCase(),
       });
 
-      await FleetFuelApi.telemetry.submitReading({
-        vehicleId: created.id,
-        fuelLevel: 50,
-        timestamp: new Date().toISOString(),
-      });
+
 
       const frontendVehicle = toFrontendVehicle({
         ...created,
         fleetId: fleetEntry?.id ?? created.fleetId,
-        readings: [{ fuelLevel: 50 }],
-      });
+        readings: [],
+      }, fleets);
 
       setVehicles((prev) => [
         { ...frontendVehicle, fleet: fleetEntry?.name ?? frontendVehicle.fleet },
@@ -170,7 +166,7 @@ export default function Fleet() {
     }
     if (!selected?.id) return;
 
-    const fleetEntry = seedFleets.find((item) => item.name === updateForm.fleet);
+    const fleetEntry = fleets.find((item) => item.name === updateForm.fleet);
     const currentVehicle = vehicles.find((vehicle) => vehicle.id === selected.id);
     const apiType = ({
       TRUCK: "Truck",
@@ -180,7 +176,11 @@ export default function Fleet() {
     })[updateForm.type || currentVehicle?.type || "TRUCK"] ?? "Truck";
 
     try {
-      await FleetFuelApi.vehicles.assignToFleet(selected.id, fleetEntry?.id ?? null);
+      if (fleetEntry?.id) {
+        await FleetFuelApi.vehicles.assignToFleet(selected.id, fleetEntry.id);
+      } else {
+        await FleetFuelApi.vehicles.removeFromFleet(selected.id);
+      }
 
       if (currentVehicle && updateForm.type && updateForm.type !== currentVehicle.type) {
         await FleetFuelApi.vehicles.update(selected.id, {
@@ -212,12 +212,8 @@ export default function Fleet() {
   };
 
   const handleAssignSensor = async () => {
-    if (!sensorForm.sensorId) {
-      toast.error("Please enter a sensor ID");
-      return;
-    }
     if (!selected?.id) return;
-    const sensorId = sensorForm.sensorId.trim().toUpperCase();
+    const sensorId = `FS-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
 
     try {
       await FleetFuelApi.vehicles.assignFuelSensor(selected.id, {
@@ -225,9 +221,21 @@ export default function Fleet() {
         serialNo: sensorId,
       });
 
-      setVehicles((prev) => prev.map((vehicle) => (vehicle.id === selected.id ? { ...vehicle, sensor: sensorId } : vehicle)));
+      // Submit an initial telemetry reading so the vehicle has immediate simulated data
+      const initialFuelLevel = Math.floor(Math.random() * 40) + 50; // Random between 50 and 90
+      await FleetFuelApi.telemetry.submitReading({
+        vehicleId: selected.id,
+        fuelLevel: initialFuelLevel,
+        timestamp: new Date().toISOString(),
+      });
+
+      setVehicles((prev) => prev.map((vehicle) => {
+        if (vehicle.id === selected.id) {
+          return { ...vehicle, sensor: sensorId, fuelLevel: initialFuelLevel };
+        }
+        return vehicle;
+      }));
       toast.success(`Sensor ${sensorId} assigned to ${selected.plate}`);
-      setSensorForm({ sensorId: "" });
       setAssignSensorOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to assign sensor");
@@ -238,13 +246,29 @@ export default function Fleet() {
     if (!selected?.id) return;
 
     try {
-      await FleetFuelApi.vehicles.delete(selected.id);
-      setVehicles((prev) => prev.filter((vehicle) => vehicle.id !== selected.id));
+      await FleetFuelApi.vehicles.removeFromFleet(selected.id);
+      setVehicles((prev) => prev.map((vehicle) => vehicle.id === selected.id ? { ...vehicle, fleet: "Unassigned" } : vehicle));
       toast.success(`Removed ${selected.plate} from fleet`);
       setRemoveVehicleOpen(false);
-      setSelectedId(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove vehicle");
+      toast.error(error instanceof Error ? error.message : "Failed to remove vehicle from fleet");
+    }
+  };
+
+  const handleViewTelemetry = async () => {
+    if (!selected?.id) return;
+    setTelemetryOpen(true);
+    setTelemetryHistory([]);
+    setVehicleDetails(null);
+    try {
+      const [vehicle, readings] = await Promise.all([
+        FleetFuelApi.vehicles.get(selected.id),
+        FleetFuelApi.telemetry.listVehicleReadings(selected.id)
+      ]);
+      setVehicleDetails(vehicle);
+      setTelemetryHistory(readings || []);
+    } catch (error) {
+      toast.error("Failed to load telemetry history");
     }
   };
 
@@ -266,7 +290,7 @@ export default function Fleet() {
             { label: "Total Vehicles", value: vehicles.length, icon: Truck, color: "text-primary" },
             { label: "With Sensor", value: vehicles.filter(v=>!!v.sensor).length, icon: Fuel, color: "text-success" },
             { label: "Without Sensor", value: vehicles.filter(v=>!v.sensor).length, icon: Wrench, color: "text-warning" },
-            { label: "Low Fuel", value: vehicles.filter(v=>v.fuelLevel < 20).length, icon: WifiOff, color: "text-destructive" },
+            { label: "Low Fuel", value: vehicles.filter(v=>v.fuelLevel !== undefined && v.fuelLevel < 20).length, icon: WifiOff, color: "text-destructive" },
           ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
             <s.icon className={cn("size-5", s.color)} />
@@ -316,12 +340,12 @@ export default function Fleet() {
                 
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {filtered.map((v) => (
+                <Fragment key={v.id}>
                 <tr
-                  key={v.id}
                   onClick={() => setSelectedId(selectedId === v.id ? null : v.id)}
-                  className="hover:bg-muted/30 transition-colors cursor-pointer"
+                  className={cn("hover:bg-muted/30 transition-colors cursor-pointer", selectedId === v.id && "bg-muted/50")}
                 >
                   <td className="px-5 py-3.5">
                     <div className="font-medium">{v.make} {v.model}</div>
@@ -330,17 +354,23 @@ export default function Fleet() {
                   <td className="px-5 py-3.5 text-xs font-medium text-muted-foreground">{v.type}</td>
                   <td className="px-5 py-3.5 text-sm">{v.fleet}</td>
                   <td className="px-5 py-3.5 w-40">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div className={cn("h-full rounded-full transition-all", fuelColor(v.fuelLevel))}
-                          style={{ width: `${v.fuelLevel}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-8 text-right font-numeric">{v.fuelLevel}%</span>
-                    </div>
-                    {v.fuelLevel < 20 && (
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-destructive">
-                        <AlertTriangle className="size-3" /> Low fuel
-                      </div>
+                    {v.fuelLevel !== undefined ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className={cn("h-full rounded-full transition-all", fuelColor(v.fuelLevel))}
+                              style={{ width: `${v.fuelLevel}%` }} />
+                          </div>
+                          <span className="text-xs text-muted-foreground w-8 text-right font-numeric">{v.fuelLevel}%</span>
+                        </div>
+                        {v.fuelLevel < 20 && (
+                          <div className="flex items-center gap-1 mt-1 text-[10px] text-destructive">
+                            <AlertTriangle className="size-3" /> Low fuel
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No Sensor Data</span>
                     )}
                   </td>
                   <td className="px-5 py-3.5 font-mono text-xs">
@@ -352,58 +382,73 @@ export default function Fleet() {
                   </td>
                   
                 </tr>
+                {selectedId === v.id && selected && (
+                  <tr key={`detail-${v.id}`}>
+                    <td colSpan="5" className="p-0 border-b border-border">
+                      <div className="bg-muted/30 px-5 py-4 animate-slide-down shadow-inner">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold">{selected.make} {selected.model} <span className="font-mono text-sm text-muted-foreground">{selected.plate}</span></h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">Vehicle ID: {selected.id} · Year: {selected.year} · Type: {selected.type}</p>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedId(null); }} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                          <div><div className="text-xs text-muted-foreground mb-0.5">Fleet</div>{selected.fleet}</div>
+                          <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Level</div>{selected.fuelLevel !== undefined ? `${selected.fuelLevel}%` : "No Data"}</div>
+                          <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Sensor</div>{selected.sensor || "Not assigned"}</div>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUpdateForm({ fleet: selected.fleet, type: selected.type });
+                              setUpdateDetailsOpen(true);
+                            }}
+                          >
+                            Assign Vehicle to Fleet
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-xs"
+                            onClick={(e) => { e.stopPropagation(); setAssignSensorOpen(true); }}
+                          >
+                            {selected.sensor ? "Replace Sensor" : "Assign Sensor"}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-xs"
+                            disabled={!selected.sensor}
+                            onClick={(e) => { e.stopPropagation(); handleViewTelemetry(); }}
+                          >
+                            View Telemetry
+                          </Button>
+                          {selected.fleet && selected.fleet !== "Unassigned" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-warning hover:text-warning"
+                              onClick={(e) => { e.stopPropagation(); setRemoveVehicleOpen(true); }}
+                            >
+                              Remove from Fleet
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Detail drawer */}
-        {selected && (
-          <div className="border-t border-border bg-muted/30 px-5 py-4 animate-slide-up">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h4 className="font-semibold">{selected.make} {selected.model} <span className="font-mono text-sm text-muted-foreground">{selected.plate}</span></h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Vehicle ID: {selected.id} · Year: {selected.year} · Type: {selected.type}</p>
-              </div>
-              <button onClick={() => setSelectedId(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-              <div><div className="text-xs text-muted-foreground mb-0.5">Fleet</div>{selected.fleet}</div>
-              <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Level</div>{selected.fuelLevel}%</div>
-              <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Sensor</div>{selected.sensor || "Not assigned"}</div>
-              
-            </div>
-            <div className="flex gap-2 mt-4">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="text-xs"
-                onClick={() => {
-                  setUpdateForm({ fleet: selected.fleet, type: selected.type });
-                  setUpdateDetailsOpen(true);
-                }}
-              >
-                Assign Vehicle to Fleet
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="text-xs"
-                onClick={() => setAssignSensorOpen(true)}
-              >
-                Assign Sensor
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="text-xs text-destructive hover:text-destructive"
-                onClick={() => setRemoveVehicleOpen(true)}
-              >
-                Remove from Fleet
-              </Button>
-            </div>
-          </div>
-        )}
       </Card>
 
       {/* Register Vehicle Dialog */}
@@ -536,72 +581,97 @@ export default function Fleet() {
         </DialogContent>
       </Dialog>
 
-      {/* Assign Sensor Dialog */}
-      <Dialog open={assignSensorOpen} onOpenChange={setAssignSensorOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Assign Fuel Sensor</DialogTitle>
-            <DialogDescription>
-              Assign a fuel sensor to {selected?.plate}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="p-3 bg-muted/50 rounded-lg border border-border">
-              <div className="text-sm font-medium">{selected?.plate}</div>
-              <div className="text-xs text-muted-foreground">{selected?.make} {selected?.model}</div>
-              {selected?.sensor && (
-                <div className="text-xs text-success mt-1">Current sensor: {selected.sensor}</div>
+      {/* Assign Sensor Alert Dialog */}
+      <AlertDialog open={assignSensorOpen} onOpenChange={setAssignSensorOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{selected?.sensor ? "Replace Fuel Sensor" : "Assign Fuel Sensor"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected?.sensor ? (
+                <>This vehicle currently has sensor <strong>{selected.sensor}</strong>. Generating and assigning a new sensor will override the current one.</>
+              ) : (
+                <>This will dynamically generate a new fuel sensor and assign it to <strong>{selected?.plate}</strong>.</>
               )}
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Sensor ID *</label>
-              <input
-                value={sensorForm.sensorId}
-                onChange={(e) => setSensorForm({...sensorForm, sensorId: e.target.value})}
-                placeholder="e.g., FS-AA1"
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
-              />
-              <p className="text-xs text-muted-foreground mt-2">Sensor IDs follow the format: FS-XXX (where X is alphanumeric)</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignSensorOpen(false)}>Cancel</Button>
-            <Button onClick={handleAssignSensor}>Assign Sensor</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <br/><br/>
+              Simulated telemetry data will automatically begin streaming once the sensor is assigned.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAssignSensor}>Proceed & Assign</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Remove Vehicle Alert Dialog */}
       <AlertDialog open={removeVehicleOpen} onOpenChange={setRemoveVehicleOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="size-5 text-destructive" />
-              Remove Vehicle from Fleet?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Remove from Fleet?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <strong>{selected?.plate}</strong> ({selected?.make} {selected?.model}) from <strong>{selected?.fleet}</strong>?
-              <br />
-              <br />
-              This action will:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Remove the vehicle from active tracking</li>
-                <li>Deassign the fuel sensor if present</li>
-                <li>Archive the vehicle's fuel records</li>
-              </ul>
+              Are you sure you want to remove this vehicle from its current fleet? The vehicle will remain registered in the system as "Unassigned".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleRemoveVehicle}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-warning hover:bg-warning/90 text-warning-foreground"
             >
-              Remove Vehicle
+              Remove from Fleet
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Telemetry History Dialog */}
+      <Dialog open={telemetryOpen} onOpenChange={setTelemetryOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vehicle Telemetry History</DialogTitle>
+            <DialogDescription>
+              {vehicleDetails ? `${vehicleDetails.make} ${vehicleDetails.model} (${vehicleDetails.licensePlate})` : "Loading vehicle data..."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {vehicleDetails && (
+              <div className="text-sm">
+                <span className="font-medium text-muted-foreground">Sensor: </span>
+                <span>{vehicleDetails.sensor?.id || "None"}</span>
+              </div>
+            )}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider text-left">
+                    <th className="px-4 py-2 font-medium">Timestamp</th>
+                    <th className="px-4 py-2 font-medium text-right">Fuel Level</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {telemetryHistory.length > 0 ? (
+                    telemetryHistory.map((reading, idx) => (
+                      <tr key={idx} className="hover:bg-muted/20">
+                        <td className="px-4 py-2 text-muted-foreground">{new Date(reading.timestamp).toLocaleString()}</td>
+                        <td className="px-4 py-2 text-right font-medium">{reading.fuelLevel}%</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="px-4 py-8 text-center text-muted-foreground italic">
+                        {vehicleDetails ? "No telemetry readings recorded." : "Loading..."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTelemetryOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

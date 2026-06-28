@@ -24,21 +24,30 @@ async function request(path, options = {}) {
 
 export const FleetFuelApi = {
   managers: {
+    list: () => request('/api/managers'),
+    get: (id) => request(`/api/managers/${id}`),
     create: (data) => request('/api/managers', { method: 'POST', body: JSON.stringify(data) }),
   },
   fleets: {
+    list: () => request('/api/fleets'),
+    get: (id) => request(`/api/fleets/${id}`),
     create: (data) => request('/api/fleets', { method: 'POST', body: JSON.stringify(data) }),
     updateName: (id, name) => request(`/api/fleets/${id}/name`, { method: 'PUT', body: JSON.stringify({ name }) }),
     getDashboard: (fleetId) => request(`/api/fleets/${fleetId}/dashboard`),
+    listVehicles: (fleetId) => request(`/api/fleets/${fleetId}/vehicles`),
   },
   vehicles: {
+    list: () => request('/api/vehicles'),
+    get: (id) => request(`/api/vehicles/${id}`),
     register: (data) => request('/api/vehicles', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => request(`/api/vehicles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     assignToFleet: (id, fleetId) => request(`/api/vehicles/${id}/fleet`, { method: 'POST', body: JSON.stringify({ fleetId }) }),
-    delete: (id) => request(`/api/vehicles/${id}`, { method: 'DELETE' }),
+    removeFromFleet: (id) => request(`/api/vehicles/${id}/fleet`, { method: 'DELETE' }),
     assignFuelSensor: (id, sensorData) => request(`/api/vehicles/${id}/fuel-sensor`, { method: 'POST', body: JSON.stringify(sensorData) }),
   },
   telemetry: {
+    listReadings: () => request('/api/telemetry/readings'),
+    listVehicleReadings: (vehicleId) => request(`/api/vehicles/${vehicleId}/telemetry/readings`),
     submitReading: (data) => request('/api/telemetry/readings', { method: 'POST', body: JSON.stringify(data) }),
   },
   system: {
