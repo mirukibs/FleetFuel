@@ -11,7 +11,7 @@ start({
     mode: "local",
     functionsConfig: {
         bfastJsonPath: join(backendRoot, "bfast.json"),
-        functionsDirPath: join(backendRoot, "VehicleAndFleetTelemetryModule/Presentation"),
+        functionsDirPath: backendRoot,
         assets: join(backendRoot, "Assets"),
     }
 }).catch(err => console.log(err));

@@ -136,6 +136,27 @@ test("FuelProcurement Application Layer", async (t) => {
     assert.strictEqual(comparison[1].supplierName, "Global Fuels");
   });
 
+  await t.test("ProcurementApplicationService enforces quantity bounds", () => {
+    // fs-2 offers diesel: min 1000, max 50000
+    assert.throws(() => procurementAppService.createProcurementRequest({
+      id: "pr-invalid-1",
+      fleetCompanyId: "fc-1",
+      fuelSupplierId: "fs-2",
+      fuelType: FuelType.DIESEL,
+      fuelQuantityLitres: 500,
+      unitPrice: 1400
+    }), /Requested quantity is below the minimum/);
+
+    assert.throws(() => procurementAppService.createProcurementRequest({
+      id: "pr-invalid-2",
+      fleetCompanyId: "fc-1",
+      fuelSupplierId: "fs-2",
+      fuelType: FuelType.DIESEL,
+      fuelQuantityLitres: 60000,
+      unitPrice: 1400
+    }), /Requested quantity exceeds the available/);
+  });
+
   await t.test("ProcurementApplicationService coordinates procurement workflow", () => {
     // 1. Create a request
     const request = procurementAppService.createProcurementRequest({

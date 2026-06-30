@@ -1,10 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Truck, Fuel, X, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Truck, Fuel, X, BarChart3, Settings, Store, ClipboardList, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/app/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
   { to: "/app/vehicles",      label: "Fleet",         icon: Truck },
+  { to: "/app/suppliers",     label: "Suppliers",     icon: Store },
+  { to: "/app/fleet-companies", label: "Fleet Companies", icon: Building2 },
+  { to: "/app/procurement",   label: "Procurement",   icon: ClipboardList },
   { to: "/app/admin",         label: "Admin",         icon: Settings },
 ];
 

@@ -1,5 +1,5 @@
 import { ProcurementRequest } from '../../Domain/entities/ProcurementRequest.mjs';
-import { NotFoundError } from '../../Domain/errors.mjs';
+import { NotFoundError, ValidationError } from '../../Domain/errors.mjs';
 
 export class ProcurementApplicationService {
   constructor({ procurementRepo, fleetCompanyRepo, fuelSupplierRepo }) {
@@ -19,6 +19,17 @@ export class ProcurementApplicationService {
       throw new NotFoundError(`FuelSupplier with ID ${input.fuelSupplierId} not found.`);
     }
 
+    const offer = supplier.fuelOffers.find(o => o.fuelType === input.fuelType);
+    if (!offer) {
+      throw new ValidationError(`FuelSupplier does not offer fuel type ${input.fuelType}.`);
+    }
+    if (input.fuelQuantityLitres < offer.minimumOrderQuantityLitres) {
+      throw new ValidationError(`Requested quantity is below the minimum order quantity of ${offer.minimumOrderQuantityLitres}L.`);
+    }
+    if (input.fuelQuantityLitres > offer.availableQuantityLitres) {
+      throw new ValidationError(`Requested quantity exceeds the available quantity of ${offer.availableQuantityLitres}L.`);
+    }
+
     const request = new ProcurementRequest({
       id: input.id,
       fleetCompanyId: input.fleetCompanyId,
@@ -36,6 +47,19 @@ export class ProcurementApplicationService {
     const request = this.procurementRepo.findById(id);
     if (!request) {
       throw new NotFoundError(`ProcurementRequest with ID ${id} not found.`);
+    }
+
+    const supplier = this.fuelSupplierRepo.findById(request.fuelSupplierId);
+    if (supplier) {
+      const offer = supplier.fuelOffers.find(o => o.fuelType === request.fuelType);
+      if (offer) {
+        if (input.fuelQuantityLitres < offer.minimumOrderQuantityLitres) {
+          throw new ValidationError(`Requested quantity is below the minimum order quantity of ${offer.minimumOrderQuantityLitres}L.`);
+        }
+        if (input.fuelQuantityLitres > offer.availableQuantityLitres) {
+          throw new ValidationError(`Requested quantity exceeds the available quantity of ${offer.availableQuantityLitres}L.`);
+        }
+      }
     }
 
     request.updateDetails(input.fuelQuantityLitres, input.unitPrice);
