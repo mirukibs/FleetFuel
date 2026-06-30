@@ -1,0 +1,17 @@
+export class ProcurementRequestRepository {
+  save(procurementRequest) {
+    throw new Error("Method not implemented.");
+  }
+
+  findById(id) {
+    throw new Error("Method not implemented.");
+  }
+
+  findByFleetCompanyId(fleetCompanyId) {
+    throw new Error("Method not implemented.");
+  }
+
+  findByFuelSupplierId(fuelSupplierId) {
+    throw new Error("Method not implemented.");
+  }
+}

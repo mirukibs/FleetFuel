@@ -57,5 +57,32 @@ export const FleetFuelApi = {
      */
     health: () => request('/functions-health'),
     listEndpoints: () => request('/functions-all?format=json'),
+  },
+  fleetCompanies: {
+    list: () => request('/api/fleet-companies'),
+    get: (id) => request(`/api/fleet-companies/${id}`),
+    register: (data) => request('/api/fleet-companies', { method: 'POST', body: JSON.stringify(data) }),
+    updateDetails: (id, data) => request(`/api/fleet-companies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+  fuelSuppliers: {
+    list: () => request('/api/fuel-suppliers'),
+    getOffers: (id) => request(`/api/fuel-suppliers/${id}/offers`),
+    register: (data) => request('/api/fuel-suppliers', { method: 'POST', body: JSON.stringify(data) }),
+    updateDetails: (id, data) => request(`/api/fuel-suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    addOffer: (id, data) => request(`/api/fuel-suppliers/${id}/offers`, { method: 'POST', body: JSON.stringify(data) }),
+    updateOffer: (id, data) => request(`/api/fuel-suppliers/${id}/offers`, { method: 'PUT', body: JSON.stringify(data) }),
+    removeOffer: (id, fuelType) => request(`/api/fuel-suppliers/${id}/offers/${fuelType}`, { method: 'DELETE' }),
+    comparePrices: (fuelType) => request(`/api/fuel-offers/compare/${fuelType}`),
+  },
+  procurement: {
+    listByCompany: (companyId) => request(`/api/fleet-companies/${companyId}/procurement-requests`),
+    listBySupplier: (supplierId) => request(`/api/fuel-suppliers/${supplierId}/procurement-requests`),
+    get: (id) => request(`/api/procurement-requests/${id}`),
+    create: (data) => request('/api/procurement-requests', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => request(`/api/procurement-requests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    submit: (id) => request(`/api/procurement-requests/${id}/submit`, { method: 'PUT' }),
+    accept: (id) => request(`/api/procurement-requests/${id}/accept`, { method: 'PUT' }),
+    reject: (id) => request(`/api/procurement-requests/${id}/reject`, { method: 'PUT' }),
+    fulfill: (id) => request(`/api/procurement-requests/${id}/fulfill`, { method: 'PUT' }),
   }
 };
