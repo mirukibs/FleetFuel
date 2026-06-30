@@ -5,13 +5,13 @@ import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
 import { Button } from "@/componets/ui/button";
 import { cn } from "@/lib/utils";
 import { FleetFuelApi } from "@/lib/client";
-import { bootstrapFleetModule, fleetNameById, seedFleets } from "@/lib/fleetModule";
 
 export default function Dashboard() {
-  const [fleetId, setFleetId] = useState(seedFleets[0].id);
+  const [fleets, setFleets] = useState([]);
+  const [fleetId, setFleetId] = useState("");
   const [dashboard, setDashboard] = useState({
-    fleetId: seedFleets[0].id,
-    fleetName: seedFleets[0].name,
+    fleetId: "",
+    fleetName: "",
     vehicles: [],
   });
   const [loading, setLoading] = useState(true);
@@ -24,28 +24,34 @@ export default function Dashboard() {
     const loadDashboard = async () => {
       try {
         setLoading(true);
-        const data = await FleetFuelApi.fleets.getDashboard(fleetId);
-        if (active) {
-          setDashboard(data);
-          setError("");
+        const fetchedFleets = await FleetFuelApi.fleets.list() || [];
+        if (active) setFleets(fetchedFleets);
+        
+        const currentFleetId = fleetId || (fetchedFleets.length > 0 ? fetchedFleets[0].id : "");
+        if (active && currentFleetId && !fleetId) setFleetId(currentFleetId);
+
+        if (currentFleetId) {
+          const data = await FleetFuelApi.fleets.getDashboard(currentFleetId);
+          if (active) {
+            setDashboard(data);
+            setError("");
+          }
+        } else if (active) {
+          setLoading(false);
+          setDashboard({ fleetId: "", fleetName: "", vehicles: [] });
         }
       } catch (fetchError) {
         if (active) {
           setError(fetchError instanceof Error ? fetchError.message : "Failed to load dashboard");
         }
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     };
 
-    void bootstrapFleetModule().catch(() => null);
     void loadDashboard();
 
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [fleetId]);
 
   const fleetVehicles = useMemo(() => dashboard.vehicles ?? [], [dashboard.vehicles]);
@@ -105,7 +111,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <PageHeader
         title="Dashboard"
-        subtitle={`Fleet telemetry overview · ${dashboard.fleetName ?? fleetNameById[fleetId] ?? "Fleet"}`}
+        subtitle={`Fleet telemetry overview · ${dashboard.fleetName || "Select a Fleet"}`}
         actions={
           <div className="flex items-center gap-2">
             <select
@@ -113,7 +119,7 @@ export default function Dashboard() {
               onChange={(e) => setFleetId(e.target.value)}
               className="h-9 px-3 text-xs rounded-lg bg-muted/60 border border-transparent focus:border-ring outline-none"
             >
-              {seedFleets.map((fleet) => (
+              {fleets.map((fleet) => (
                 <option key={fleet.id} value={fleet.id}>
                   {fleet.name}
                 </option>

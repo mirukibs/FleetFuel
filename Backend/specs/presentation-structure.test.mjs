@@ -7,14 +7,24 @@ const presentationDir = new URL('../VehicleAndFleetTelemetryModule/Presentation/
 
 const expectedEndpoints = [
   ['createFleet', 'post', '/api/fleets', 'controllers/fleet/createFleet.mjs'],
+  ['listFleets', 'get', '/api/fleets', 'controllers/fleet/listFleets.mjs'],
+  ['getFleet', 'get', '/api/fleets/:id', 'controllers/fleet/getFleet.mjs'],
+  ['listFleetVehicles', 'get', '/api/fleets/:fleetId/vehicles', 'controllers/fleet/listFleetVehicles.mjs'],
   ['updateFleetName', 'put', '/api/fleets/:id/name', 'controllers/fleet/updateFleetName.mjs'],
   ['createManager', 'post', '/api/managers', 'controllers/fleet-manager/createManager.mjs'],
+  ['listManagers', 'get', '/api/managers', 'controllers/fleet-manager/listManagers.mjs'],
+  ['getManager', 'get', '/api/managers/:id', 'controllers/fleet-manager/getManager.mjs'],
   ['registerVehicle', 'post', '/api/vehicles', 'controllers/vehicle/registerVehicle.mjs'],
+  ['listVehicles', 'get', '/api/vehicles', 'controllers/vehicle/listVehicles.mjs'],
+  ['getVehicle', 'get', '/api/vehicles/:id', 'controllers/vehicle/getVehicle.mjs'],
   ['updateVehicle', 'put', '/api/vehicles/:id', 'controllers/vehicle/updateVehicle.mjs'],
   ['assignVehicleToFleet', 'post', '/api/vehicles/:id/fleet', 'controllers/vehicle/assignVehicleToFleet.mjs'],
-  ['removeVehicleFromFleet', 'delete', '/api/vehicles/:id', 'controllers/vehicle/removeVehicleFromFleet.mjs'],
+  ['removeVehicleFromFleet', 'delete', '/api/vehicles/:id/fleet', 'controllers/vehicle/removeVehicleFromFleet.mjs'],
+  ['deleteVehicle', 'delete', '/api/vehicles/:id', 'controllers/vehicle/deleteVehicle.mjs'],
   ['assignFuelSensor', 'post', '/api/vehicles/:id/fuel-sensor', 'controllers/vehicle/assignFuelSensor.mjs'],
   ['receiveSimulatedReading', 'post', '/api/telemetry/readings', 'controllers/telemetry/receiveSimulatedReading.mjs'],
+  ['listTelemetryReadings', 'get', '/api/telemetry/readings', 'controllers/telemetry/listTelemetryReadings.mjs'],
+  ['listVehicleTelemetryReadings', 'get', '/api/vehicles/:id/telemetry/readings', 'controllers/telemetry/listVehicleTelemetryReadings.mjs'],
   ['getFleetDashboard', 'get', '/api/fleets/:fleetId/dashboard', 'controllers/telemetry/getFleetDashboard.mjs']
 ];
 

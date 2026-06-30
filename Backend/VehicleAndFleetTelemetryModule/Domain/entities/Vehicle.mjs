@@ -1,4 +1,6 @@
 import {ValidationError} from '../errors.mjs';
+import {FuelSensor} from './FuelSensor.mjs';
+import {FuelSensorReading} from './FuelSensorReading.mjs';
 
 export class Vehicle {
   constructor({
@@ -50,32 +52,26 @@ export class Vehicle {
     if (!sensorId || !serialNo) {
       throw new ValidationError('Sensor id and serial number are required.');
     }
-    this.sensor = {
+    this.sensor = new FuelSensor({
       id: sensorId,
       serialNo,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    });
     this.updatedAt = new Date().toISOString();
   }
 
   recordSimulatedReading({id, fuelLevel, timestamp}) {
-    const parsedLevel = Number(fuelLevel);
-    if (!Number.isFinite(parsedLevel) || parsedLevel < 0 || parsedLevel > 100) {
-      throw new ValidationError('Fuel level must be a number between 0 and 100.');
-    }
-    const reading = {
+    const reading = new FuelSensorReading({
       id,
       vehicleId: this.id,
-      timestamp: timestamp ?? new Date().toISOString(),
-      fuelLevel: parsedLevel
-    };
+      timestamp,
+      fuelLevel
+    });
     const previous = this.getLatestReading();
     this.readings.push(reading);
     this.updatedAt = new Date().toISOString();
     return {
-      ...reading,
-      alertTriggered: previous ? previous.fuelLevel - parsedLevel >= 15 : false
+      ...reading.toJSON(),
+      alertTriggered: previous ? previous.getFuelLevel() - reading.getFuelLevel() >= 15 : false
     };
   }
 
@@ -90,8 +86,8 @@ export class Vehicle {
       ...this.specification.toJSON(),
       type: this.type,
       licensePlate: this.licensePlate,
-      sensor: this.sensor,
-      readings: this.readings,
+      sensor: this.sensor ? this.sensor.toJSON() : null,
+      readings: this.readings.map((reading) => reading.toJSON()),
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };

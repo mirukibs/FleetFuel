@@ -24,9 +24,9 @@ export class TelemetryApplicationService {
       return {
         vehicleId: vehicle.id,
         licensePlate: vehicle.licensePlate,
-        currentFuelLevel: latestReading?.fuelLevel ?? null,
-        lastUpdated: latestReading?.timestamp ?? null,
-        sensor: vehicle.sensor,
+        currentFuelLevel: latestReading?.getFuelLevel() ?? null,
+        lastUpdated: latestReading?.getTimestamp() ?? null,
+        sensor: vehicle.sensor ? vehicle.sensor.toJSON() : null,
         alertTriggered: false
       };
     });
@@ -36,5 +36,19 @@ export class TelemetryApplicationService {
       fleetName: fleet.name,
       vehicles
     };
+  }
+
+  listVehicleTelemetryReadings(vehicleId) {
+    const vehicle = this.vehicleRepo.findById(vehicleId);
+    return vehicle.readings.map((reading) => reading.toJSON());
+  }
+
+  listTelemetryReadings({vehicleId} = {}) {
+    if (vehicleId) {
+      return this.listVehicleTelemetryReadings(vehicleId);
+    }
+    return this.vehicleRepo
+      .findAll()
+      .flatMap((vehicle) => vehicle.readings);
   }
 }

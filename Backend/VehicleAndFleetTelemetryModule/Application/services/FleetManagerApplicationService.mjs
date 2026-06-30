@@ -15,4 +15,12 @@ export class FleetManagerApplicationService {
     });
     return this.managerRepo.save(manager).toJSON();
   }
+
+  listManagers() {
+    return this.managerRepo.findAll().map((manager) => manager.toJSON());
+  }
+
+  getManager(id) {
+    return this.managerRepo.findById(id).toJSON();
+  }
 }
