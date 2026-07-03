@@ -25,11 +25,13 @@ async function request(path, options = {}) {
 export const FleetFuelApi = {
   managers: {
     list: () => request('/api/managers'),
+    listByCompany: (fleetCompanyId) => request(`/api/managers?fleetCompanyId=${fleetCompanyId}`),
     get: (id) => request(`/api/managers/${id}`),
     create: (data) => request('/api/managers', { method: 'POST', body: JSON.stringify(data) }),
   },
   fleets: {
     list: () => request('/api/fleets'),
+    listByCompany: (fleetCompanyId) => request(`/api/fleets?fleetCompanyId=${fleetCompanyId}`),
     get: (id) => request(`/api/fleets/${id}`),
     create: (data) => request('/api/fleets', { method: 'POST', body: JSON.stringify(data) }),
     updateName: (id, name) => request(`/api/fleets/${id}/name`, { method: 'PUT', body: JSON.stringify({ name }) }),

@@ -62,6 +62,7 @@ Package VehicleManagement {
             - id: string
             - name: String
             - fleetManagerId: string
+            - fleetCompanyId: string
             - createdAt: DateTime
             - updatedAt: DateTime
             ---
@@ -76,6 +77,7 @@ Package VehicleManagement {
             - id: string
             - fullName: Name
             - email: String
+            - fleetCompanyId: string
             - createdAt: DateTime
             - updatedAt: DateTime
             ---
@@ -89,6 +91,8 @@ Package VehicleManagement {
          ' Relationships
          Vehicle ..> Fleet : references by fleetId >
          Fleet ..> FleetManager : references by fleetManagerId >
+         Fleet ..> FleetCompany : references by fleetCompanyId >
+         FleetManager ..> FleetCompany : references by fleetCompanyId >
       }
 
       Package ValueObjects {

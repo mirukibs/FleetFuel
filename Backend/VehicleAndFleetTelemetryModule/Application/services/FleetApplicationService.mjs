@@ -14,13 +14,18 @@ export class FleetApplicationService {
     const fleet = new Fleet({
       id: input.id ?? nextId('fleet'),
       name: input.name,
-      fleetManagerId: input.fleetManagerId ?? null
+      fleetManagerId: input.fleetManagerId ?? null,
+      fleetCompanyId: input.fleetCompanyId
     });
     return this.fleetRepo.save(fleet).toJSON();
   }
 
   listFleets() {
     return this.fleetRepo.findAll().map((fleet) => fleet.toJSON());
+  }
+
+  listFleetsByCompany(fleetCompanyId) {
+    return this.fleetRepo.findByCompanyId(fleetCompanyId).map((fleet) => fleet.toJSON());
   }
 
   getFleet(id) {

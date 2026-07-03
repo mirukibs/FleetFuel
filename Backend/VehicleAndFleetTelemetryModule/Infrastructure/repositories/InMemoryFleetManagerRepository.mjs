@@ -18,4 +18,8 @@ export class InMemoryFleetManagerRepository {
   findAll() {
     return [...inMemoryDatabase.fleetManagers.values()];
   }
+
+  findByCompanyId(fleetCompanyId) {
+    return [...inMemoryDatabase.fleetManagers.values()].filter(m => m.fleetCompanyId === fleetCompanyId);
+  }
 }

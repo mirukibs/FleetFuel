@@ -8,7 +8,6 @@ const nav = [
   { to: "/app/suppliers",     label: "Suppliers",     icon: Store },
   { to: "/app/fleet-companies", label: "Fleet Companies", icon: Building2 },
   { to: "/app/procurement",   label: "Procurement",   icon: ClipboardList },
-  { to: "/app/admin",         label: "Admin",         icon: Settings },
 ];
 
 function NavItem({ item, onClose }) {

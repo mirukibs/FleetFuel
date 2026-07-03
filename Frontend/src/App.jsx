@@ -4,7 +4,6 @@ import { AppShell } from "@/componets/layout/AppShell";
 // Pages
 import Dashboard from "@/pages/Dashboard";
 import Fleet from "@/pages/Fleet";
-import Admin from "@/pages/Admin";
 import Suppliers from "./pages/Suppliers";
 import FleetCompanies from "./pages/FleetCompanies";
 import Procurement from "@/pages/Procurement";
@@ -24,7 +23,6 @@ export default function App() {
                 <Route path="suppliers" element={<Suppliers />} />
           <Route path="fleet-companies" element={<FleetCompanies />} />
                 <Route path="procurement" element={<Procurement />} />
-                <Route path="admin" element={<Admin />} />
                 <Route path="*" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AppShell>

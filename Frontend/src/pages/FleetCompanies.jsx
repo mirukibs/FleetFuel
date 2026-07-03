@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/componets/ui/dialog";
 import { FleetFuelApi } from "@/lib/client";
+import CompanyOperations from "./CompanyOperations";
 
 export default function FleetCompanies() {
   const [companies, setCompanies] = useState([]);
@@ -36,6 +37,7 @@ export default function FleetCompanies() {
 
   // Fuel Management Dialogs
   const [manageFuelOpen, setManageFuelOpen] = useState(false);
+  console.log("manageFuelOpen:", manageFuelOpen);
   const [activeCompanyForFuel, setActiveCompanyForFuel] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
@@ -43,6 +45,9 @@ export default function FleetCompanies() {
     fuelType: "DIESEL",
     quantityLitres: ""
   });
+
+  const [operationsOpen, setOperationsOpen] = useState(false);
+  const [activeCompanyForOperations, setActiveCompanyForOperations] = useState(null);
 
   useEffect(() => {
     loadCompanies();
@@ -122,6 +127,11 @@ export default function FleetCompanies() {
     }
   };
 
+  const openOperations = (company) => {
+    setActiveCompanyForOperations(company);
+    setOperationsOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -186,9 +196,14 @@ export default function FleetCompanies() {
                       <div className="text-xs text-muted-foreground italic">No balances</div>
                     )}
                   </div>
-                  <Button variant="outline" className="w-full text-xs" size="sm" onClick={() => openManageFuel(c)}>
-                    <Fuel className="size-3 mr-2" /> View Account & History
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 text-xs" size="sm" onClick={() => openManageFuel(c)}>
+                      <Fuel className="size-3 mr-2" /> Fuel
+                    </Button>
+                    <Button variant="outline" className="flex-1 text-xs" size="sm" onClick={() => openOperations(c)}>
+                      <Building2 className="size-3 mr-2" /> Operations
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -388,6 +403,12 @@ export default function FleetCompanies() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CompanyOperations 
+        open={operationsOpen} 
+        onOpenChange={setOperationsOpen} 
+        company={activeCompanyForOperations} 
+      />
     </div>
   );
 }

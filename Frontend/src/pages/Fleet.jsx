@@ -727,7 +727,6 @@ export default function Fleet() {
               >
                 <option value="DIESEL">Diesel</option>
                 <option value="PETROL">Petrol</option>
-                <option value="ELECTRICITY">Electricity</option>
               </select>
             </div>
             <div>
