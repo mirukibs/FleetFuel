@@ -1,4 +1,4 @@
-import { FuelType } from "../enums/FuelType.mjs";
+import { FuelType } from "../../../SharedKernel/enums/FuelType.mjs";
 import { ValidationError } from "../errors.mjs";
 
 export class FuelOffer {

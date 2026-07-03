@@ -25,11 +25,13 @@ async function request(path, options = {}) {
 export const FleetFuelApi = {
   managers: {
     list: () => request('/api/managers'),
+    listByCompany: (fleetCompanyId) => request(`/api/managers?fleetCompanyId=${fleetCompanyId}`),
     get: (id) => request(`/api/managers/${id}`),
     create: (data) => request('/api/managers', { method: 'POST', body: JSON.stringify(data) }),
   },
   fleets: {
     list: () => request('/api/fleets'),
+    listByCompany: (fleetCompanyId) => request(`/api/fleets?fleetCompanyId=${fleetCompanyId}`),
     get: (id) => request(`/api/fleets/${id}`),
     create: (data) => request('/api/fleets', { method: 'POST', body: JSON.stringify(data) }),
     updateName: (id, name) => request(`/api/fleets/${id}/name`, { method: 'PUT', body: JSON.stringify({ name }) }),
@@ -84,5 +86,12 @@ export const FleetFuelApi = {
     accept: (id) => request(`/api/procurement-requests/${id}/accept`, { method: 'PUT' }),
     reject: (id) => request(`/api/procurement-requests/${id}/reject`, { method: 'PUT' }),
     fulfill: (id) => request(`/api/procurement-requests/${id}/fulfill`, { method: 'PUT' }),
+  },
+  fuelAccounts: {
+    deposit: (data) => request('/api/fuel-accounts/deposit', { method: 'POST', body: JSON.stringify(data) }),
+    simulateRefueling: (data) => request('/api/fuel-accounts/simulate-refueling', { method: 'POST', body: JSON.stringify(data) }),
+    get: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}`),
+    getBalance: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}/balance`),
+    getTransactions: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}/transactions`),
   }
 };

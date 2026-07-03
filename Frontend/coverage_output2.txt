@@ -1,0 +1,36 @@
+
+> fleetfuel@0.0.0 test
+> vitest run --coverage
+
+
+ RUN  v4.1.9 /home/mirukibs/Development/FleetFuel/Frontend
+      Coverage enabled with v8
+
+ ✓ src/pages/Procurement.test.jsx (7 tests) 2763ms
+     ✓ submits a new procurement request  1363ms
+     ✓ prevents creation if quantity is out of bounds  408ms
+ ✓ src/pages/Fleet.test.jsx (3 tests) 2890ms
+     ✓ should render vehicle list and disabled telemetry for unassigned vehicles  517ms
+     ✓ should support assigning a sensor and updating UI to Replace Sensor  1448ms
+     ✓ should open refuel dialog and call simulateRefueling  917ms
+ ❯ src/pages/FleetCompanies.test.jsx (5 tests | 1 failed) 3143ms
+     ✓ renders registered fleet companies 165ms
+     ✓ opens register company modal and calls API on submit  953ms
+     ✓ opens edit company modal and calls API on submit  572ms
+     × opens manage fuel dialog and loads account/history 1307ms
+     ✓ opens operations dialog 140ms
+ ✓ src/lib/client.test.js (3 tests) 39ms
+ ✓ src/pages/Suppliers.test.jsx (4 tests) 2286ms
+     ✓ opens add supplier modal and calls API on submit  1355ms
+     ✓ opens edit supplier modal and calls API on submit  535ms
+ ✓ src/lib/fleetModule.test.js (10 tests) 16ms
+ ✓ src/pages/CompanyOperations.test.jsx (3 tests) 2620ms
+     ✓ loads and displays managers and fleets on open  824ms
+     ✓ allows adding a manager  1373ms
+     ✓ allows creating a fleet  417ms
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 34 passed (35)
+   Start at  15:27:43
+   Duration  14.43s (transform 1.15s, setup 1.88s, import 7.62s, tests 13.76s, environment 12.25s)
+

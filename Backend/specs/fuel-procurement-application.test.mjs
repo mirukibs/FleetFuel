@@ -4,7 +4,7 @@ import assert from "node:assert";
 import { FleetCompanyApplicationService } from "../FuelProcurementModule/Application/services/FleetCompanyApplicationService.mjs";
 import { FuelSupplierApplicationService } from "../FuelProcurementModule/Application/services/FuelSupplierApplicationService.mjs";
 import { ProcurementApplicationService } from "../FuelProcurementModule/Application/services/ProcurementApplicationService.mjs";
-import { FuelType } from "../FuelProcurementModule/Domain/enums/FuelType.mjs";
+import { FuelType } from "../SharedKernel/enums/FuelType.mjs";
 import { ProcurementRequestStatus } from "../FuelProcurementModule/Domain/enums/ProcurementRequestStatus.mjs";
 import { DomainError } from "../FuelProcurementModule/Domain/errors.mjs";
 
@@ -188,6 +188,55 @@ test("FuelProcurement Application Layer", async (t) => {
     // 5. Fulfill the request
     const fulfilled = procurementAppService.fulfillProcurementRequest("pr-1");
     assert.strictEqual(fulfilled.procurementStatus, ProcurementRequestStatus.FULFILLED);
+  });
+  await t.test("ProcurementApplicationService handles not found errors and rejections", () => {
+    assert.throws(() => procurementAppService.getProcurementRequest("missing"), /not found/);
+    assert.throws(() => procurementAppService.updateProcurementRequest("missing", {}), /not found/);
+    assert.throws(() => procurementAppService.submitProcurementRequest("missing"), /not found/);
+    assert.throws(() => procurementAppService.acceptProcurementRequest("missing"), /not found/);
+    assert.throws(() => procurementAppService.rejectProcurementRequest("missing"), /not found/);
+    assert.throws(() => procurementAppService.fulfillProcurementRequest("missing"), /not found/);
+    assert.throws(() => procurementAppService.listRequestsByFleetCompany("missing"), /not found/);
+    assert.throws(() => procurementAppService.listRequestsBySupplier("missing"), /not found/);
+
+    const request = procurementAppService.createProcurementRequest({
+      id: "pr-2",
+      fleetCompanyId: "fc-1",
+      fuelSupplierId: "fs-2",
+      fuelType: FuelType.DIESEL,
+      fuelQuantityLitres: 2000,
+      unitPrice: 1400
+    });
+
+    procurementAppService.submitProcurementRequest("pr-2");
+    const rejected = procurementAppService.rejectProcurementRequest("pr-2");
+    assert.strictEqual(rejected.procurementStatus, ProcurementRequestStatus.REJECTED);
+  });
+
+  await t.test("ProcurementApplicationService update details", () => {
+    const request = procurementAppService.createProcurementRequest({
+      id: "pr-3",
+      fleetCompanyId: "fc-1",
+      fuelSupplierId: "fs-2",
+      fuelType: FuelType.DIESEL,
+      fuelQuantityLitres: 2000,
+      unitPrice: 1400
+    });
+
+    assert.throws(() => procurementAppService.updateProcurementRequest("pr-3", { fuelQuantityLitres: 500, unitPrice: 1400 }), /below the minimum/);
+    assert.throws(() => procurementAppService.updateProcurementRequest("pr-3", { fuelQuantityLitres: 60000, unitPrice: 1400 }), /exceeds the available/);
+
+    const updated = procurementAppService.updateProcurementRequest("pr-3", { fuelQuantityLitres: 3000, unitPrice: 1450 });
+    assert.strictEqual(updated.fuelQuantityLitres, 3000);
+    assert.strictEqual(updated.unitPrice, 1450);
+  });
+
+  await t.test("ProcurementApplicationService lists requests", () => {
+    const byCompany = procurementAppService.listRequestsByFleetCompany("fc-1");
+    assert.ok(byCompany.length > 0);
+
+    const bySupplier = procurementAppService.listRequestsBySupplier("fs-2");
+    assert.ok(bySupplier.length > 0);
   });
 
 });

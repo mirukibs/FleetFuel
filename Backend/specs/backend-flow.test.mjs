@@ -51,7 +51,8 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
       id: 'manager-001',
       firstName: 'Asha',
       lastName: 'Mollel',
-      email: 'asha@example.com'
+      email: 'asha@example.com',
+      fleetCompanyId: 'fc-test-001'
     }
   });
   assert.equal(manager.statusCode, 201);
@@ -61,7 +62,8 @@ test('fleet manager, fleet, vehicle, sensor, telemetry, and dashboard flow uses 
     body: {
       id: 'fleet-001',
       name: 'Dar es Salaam Delivery Fleet',
-      fleetManagerId: 'manager-001'
+      fleetManagerId: 'manager-001',
+      fleetCompanyId: 'fc-test-001'
     }
   });
   assert.equal(fleet.statusCode, 201);
@@ -185,7 +187,8 @@ test('endpoint handlers return validation errors instead of not-implemented resp
 
   const response = await invoke(createFleet, {
     body: {
-      name: ''
+      name: '',
+      fleetCompanyId: 'fc-test-001'
     }
   });
 

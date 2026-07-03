@@ -131,7 +131,7 @@ describe('Suppliers Page', () => {
     
     const nameInput = screen.getByDisplayValue('Shell Global');
     fireEvent.change(nameInput, { target: { value: 'Shell Inc' } });
-    
+
     const updateBtn = screen.getByText('Update', { selector: 'button' });
     fireEvent.click(updateBtn);
     
@@ -141,5 +141,112 @@ describe('Suppliers Page', () => {
       }));
       expect(FleetFuelApi.fuelSuppliers.list).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('adds a new fuel offer to a supplier', async () => {
+    FleetFuelApi.fuelSuppliers.addOffer.mockResolvedValue({});
+
+    render(<Suppliers />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getByText('View Profile & Offers'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Supplier Profile & Fuel Offers')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Add Offer'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Add Fuel Offer', { selector: 'h2' })).toBeInTheDocument();
+    });
+
+    // The other inputs: price, quantity, moq
+    const numberInputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(numberInputs[0], { target: { value: '2.5' } }); // Price
+    fireEvent.change(numberInputs[1], { target: { value: '5000' } }); // Quantity
+    fireEvent.change(numberInputs[2], { target: { value: '100' } }); // MOQ
+
+    const submitBtn = screen.getByRole('button', { name: 'Save Offer' });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(FleetFuelApi.fuelSuppliers.addOffer).toHaveBeenCalledWith('supp-1', expect.objectContaining({
+        fuelType: 'DIESEL',
+        pricePerUnit: 2.5,
+        availableQuantityLitres: 5000,
+        minimumOrderQuantityLitres: 100
+      }));
+    });
+  });
+
+  it('updates an existing fuel offer', async () => {
+    FleetFuelApi.fuelSuppliers.updateOffer.mockResolvedValue({});
+
+    render(<Suppliers />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getByText('View Profile & Offers'));
+
+    await waitFor(() => {
+      expect(screen.getByText('DIESEL')).toBeInTheDocument();
+    });
+
+    const editBtns = screen.getAllByRole('button', { name: /Edit/i });
+    // Assuming the second 'Edit' button is for the offer (the first is for supplier details)
+    fireEvent.click(editBtns[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Fuel Offer (DIESEL)', { selector: 'h2' })).toBeInTheDocument();
+    });
+
+    const numberInputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(numberInputs[0], { target: { value: '1.8' } }); // Price
+
+    const updateBtn = screen.getByRole('button', { name: 'Update Offer' });
+    fireEvent.click(updateBtn);
+
+    await waitFor(() => {
+      expect(FleetFuelApi.fuelSuppliers.updateOffer).toHaveBeenCalledWith('supp-1', expect.objectContaining({
+        pricePerUnit: 1.8
+      }));
+    });
+  });
+
+  it('removes a fuel offer', async () => {
+    FleetFuelApi.fuelSuppliers.removeOffer.mockResolvedValue({});
+    
+    // We mock window.confirm to return true
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<Suppliers />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getByText('View Profile & Offers'));
+
+    await waitFor(() => {
+      expect(screen.getByText('DIESEL')).toBeInTheDocument();
+    });
+
+    const deleteBtns = screen.getAllByRole('button', { name: /Remove/i });
+    fireEvent.click(deleteBtns[0]);
+
+    await waitFor(() => {
+      expect(FleetFuelApi.fuelSuppliers.removeOffer).toHaveBeenCalledWith('supp-1', 'DIESEL');
+    });
+
+    confirmSpy.mockRestore();
   });
 });

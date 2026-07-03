@@ -37,6 +37,7 @@ const fuelColor = (level) => {
 export default function Fleet() {
   const [vehicles, setVehicles] = useState([]);
   const [fleets, setFleets] = useState([]);
+  const [fleetCompanies, setFleetCompanies] = useState([]);
   const [search, setSearch] = useState("");
   const [fleet,  setFleet]  = useState("All Fleets");
   const [type,   setType]   = useState("All Types");
@@ -51,6 +52,7 @@ export default function Fleet() {
   const [assignSensorOpen, setAssignSensorOpen] = useState(false);
   const [removeVehicleOpen, setRemoveVehicleOpen] = useState(false);
   const [telemetryOpen, setTelemetryOpen] = useState(false);
+  const [refuelOpen, setRefuelOpen] = useState(false);
 
   // Form & view states
   const [telemetryHistory, setTelemetryHistory] = useState([]);
@@ -73,16 +75,24 @@ export default function Fleet() {
     sensorId: "",
   });
 
+  const [refuelForm, setRefuelForm] = useState({
+    fleetCompanyId: "",
+    fuelType: "DIESEL",
+    quantity: ""
+  });
+
   useEffect(() => {
     let active = true;
     async function loadData() {
       try {
-        const [loadedVehicles, loadedFleets] = await Promise.all([
+        const [loadedVehicles, loadedFleets, loadedCompanies] = await Promise.all([
           FleetFuelApi.vehicles.list(),
           FleetFuelApi.fleets.list(),
+          FleetFuelApi.fleetCompanies.list(),
         ]);
         if (active) {
           setFleets(loadedFleets || []);
+          setFleetCompanies(loadedCompanies || []);
           setVehicles((loadedVehicles || []).map((v) => toFrontendVehicle(v, loadedFleets || [])));
         }
       } catch (err) {
@@ -272,6 +282,53 @@ export default function Fleet() {
     }
   };
 
+  const handleRefuel = async () => {
+    if (!selected?.id) return;
+    if (!refuelForm.fleetCompanyId || !refuelForm.quantity) {
+      toast.error("Please fill all fields");
+      return;
+    }
+    const qty = Number(refuelForm.quantity);
+    if (qty <= 0) {
+      toast.error("Quantity must be positive");
+      return;
+    }
+    
+    try {
+      // 1. Orchestrate Fuel Account Deduction
+      await FleetFuelApi.fuelAccounts.simulateRefueling({
+        fleetCompanyId: refuelForm.fleetCompanyId,
+        vehicleId: selected.id,
+        fuelType: refuelForm.fuelType,
+        quantityLitres: qty,
+        timestamp: new Date().toISOString()
+      });
+
+      // 2. Orchestrate Telemetry Update (simulated reading)
+      if (selected.sensor) {
+        // Simple formula: Increase fuel percentage somewhat proportionally
+        // We cap it at 100
+        const newLevel = Math.min((selected.fuelLevel || 0) + Math.min(qty / 2, 40), 100); 
+        await FleetFuelApi.telemetry.submitReading({
+          vehicleId: selected.id,
+          fuelLevel: Math.floor(newLevel),
+          timestamp: new Date().toISOString(),
+        });
+        
+        // Update local state for immediate feedback
+        setVehicles(prev => prev.map(v => 
+          v.id === selected.id ? { ...v, fuelLevel: Math.floor(newLevel) } : v
+        ));
+      }
+      
+      toast.success(`Successfully refueled ${selected.plate}`);
+      setRefuelOpen(false);
+      setRefuelForm({ fleetCompanyId: "", fuelType: "DIESEL", quantity: "" });
+    } catch (err) {
+      toast.error(err.message || "Refueling failed");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -398,7 +455,7 @@ export default function Fleet() {
                           <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Level</div>{selected.fuelLevel !== undefined ? `${selected.fuelLevel}%` : "No Data"}</div>
                           <div><div className="text-xs text-muted-foreground mb-0.5">Fuel Sensor</div>{selected.sensor || "Not assigned"}</div>
                         </div>
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex gap-2 mt-4 flex-wrap">
                           <Button 
                             size="sm" 
                             variant="outline" 
@@ -427,6 +484,19 @@ export default function Fleet() {
                             onClick={(e) => { e.stopPropagation(); handleViewTelemetry(); }}
                           >
                             View Telemetry
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="default" 
+                            className="text-xs gap-1.5"
+                            disabled={!selected.sensor}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRefuelForm({ fleetCompanyId: "", fuelType: "DIESEL", quantity: "" });
+                              setRefuelOpen(true);
+                            }}
+                          >
+                            <Fuel className="size-3" /> Refuel
                           </Button>
                           {selected.fleet && selected.fleet !== "Unassigned" && (
                             <Button 
@@ -623,6 +693,62 @@ export default function Fleet() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Refuel Vehicle Dialog */}
+      <Dialog open={refuelOpen} onOpenChange={setRefuelOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Refuel Vehicle</DialogTitle>
+            <DialogDescription>
+              Simulate refueling for <strong>{selected?.plate}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Bill To (Fleet Company) *</label>
+              <select
+                value={refuelForm.fleetCompanyId}
+                onChange={(e) => setRefuelForm({...refuelForm, fleetCompanyId: e.target.value})}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
+              >
+                <option value="">Select company account...</option>
+                {fleetCompanies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.companyName}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-muted-foreground mt-1">This will deduct fuel from the company's allocated balance.</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Fuel Type *</label>
+              <select
+                value={refuelForm.fuelType}
+                onChange={(e) => setRefuelForm({...refuelForm, fuelType: e.target.value})}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
+              >
+                <option value="DIESEL">Diesel</option>
+                <option value="PETROL">Petrol</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Quantity (Litres) *</label>
+              <input
+                type="number"
+                min="1"
+                value={refuelForm.quantity}
+                onChange={(e) => setRefuelForm({...refuelForm, quantity: e.target.value})}
+                placeholder="e.g. 50"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefuelOpen(false)}>Cancel</Button>
+            <Button onClick={handleRefuel} className="gap-2">
+              <Fuel className="size-4" /> Refuel Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Telemetry History Dialog */}
       <Dialog open={telemetryOpen} onOpenChange={setTelemetryOpen}>
