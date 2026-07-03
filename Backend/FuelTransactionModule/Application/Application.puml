@@ -1,0 +1,80 @@
+@startuml
+skinparam titleFontSize 18
+title FleetFuel Fuel Transaction Module Application Layer Design
+
+Package FuelTransactionModule {
+
+    Package Domain {
+
+        Package Repositories {
+
+            Interface FuelAccountRepository {
+                + save(account: FuelAccount): void
+                + findById(id: string): FuelAccount
+                + findByFleetCompanyId(fleetCompanyId: string): FuelAccount
+            }
+
+        }
+
+    }
+
+    Package Application {
+
+        Package DTOs {
+
+            Class DepositFuelInput {
+                + fleetCompanyId: string
+                + fuelType: string
+                + quantityLitres: double
+            }
+
+            Class SimulateRefuelingInput {
+                + fleetCompanyId: string
+                + vehicleId: string
+                + fuelType: string
+                + quantityLitres: double
+                + timestamp: Date
+            }
+
+            Class FuelAccountDTO {
+                + fleetCompanyId: string
+                + balances: Map<FuelType, double>
+            }
+
+            Class FuelTransactionDTO {
+                + vehicleId: string
+                + fuelType: string
+                + quantityLitres: double
+                + timestamp: Date
+            }
+
+        }
+
+        Package Services {
+
+            Class FuelTransactionApplicationService {
+
+                - fuelAccountRepository: FuelAccountRepository
+
+                + depositFuel(input: DepositFuelInput): void
+                + simulateRefueling(input: SimulateRefuelingInput): void
+                + viewFuelAccount(fleetCompanyId: string): FuelAccountDTO
+                + viewFuelBalance(fleetCompanyId: string): Map<FuelType, double>
+                + viewTransactionHistory(fleetCompanyId: string): List<FuelTransactionDTO>
+
+            }
+
+        }
+
+        FuelTransactionApplicationService ..> DepositFuelInput
+        FuelTransactionApplicationService ..> SimulateRefuelingInput
+        FuelTransactionApplicationService ..> FuelAccountDTO
+        FuelTransactionApplicationService ..> FuelTransactionDTO
+
+    }
+
+    FuelTransactionApplicationService --> FuelAccountRepository
+
+}
+
+@enduml

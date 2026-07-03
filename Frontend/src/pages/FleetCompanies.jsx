@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Building2 } from "lucide-react";
+import { Plus, Building2, Fuel, Droplet } from "lucide-react";
 import { PageHeader } from "@/componets/ui-kit/Section";
 import { Button } from "@/componets/ui/button";
 import { toast } from "sonner";
@@ -15,8 +15,9 @@ import { FleetFuelApi } from "@/lib/client";
 export default function FleetCompanies() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Registration and Edit Dialogs
   const [newCompanyOpen, setNewCompanyOpen] = useState(false);
-
   const [newCompany, setNewCompany] = useState({
     companyName: "",
     contactPerson: "",
@@ -33,6 +34,16 @@ export default function FleetCompanies() {
     phoneNumber: ""
   });
 
+  // Fuel Management Dialogs
+  const [manageFuelOpen, setManageFuelOpen] = useState(false);
+  const [activeCompanyForFuel, setActiveCompanyForFuel] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [allocateForm, setAllocateForm] = useState({
+    fuelType: "DIESEL",
+    quantityLitres: ""
+  });
+
   useEffect(() => {
     loadCompanies();
   }, []);
@@ -41,7 +52,18 @@ export default function FleetCompanies() {
     setLoading(true);
     try {
       const data = await FleetFuelApi.fleetCompanies.list();
-      setCompanies(data || []);
+      
+      // Fetch fuel accounts for each company to display balance
+      const companiesWithFuel = await Promise.all((data || []).map(async (c) => {
+        try {
+          const account = await FleetFuelApi.fuelAccounts.get(c.id);
+          return { ...c, fuelAccount: account };
+        } catch(e) {
+          return { ...c, fuelAccount: null };
+        }
+      }));
+      
+      setCompanies(companiesWithFuel);
     } catch (err) {
       toast.error("Failed to load fleet companies");
     } finally {
@@ -82,6 +104,24 @@ export default function FleetCompanies() {
     }
   };
 
+  const openManageFuel = async (company) => {
+    setActiveCompanyForFuel(company);
+    setManageFuelOpen(true);
+    setTransactions([]);
+    
+    if (company.fuelAccount) {
+      setLoadingTransactions(true);
+      try {
+        const txs = await FleetFuelApi.fuelAccounts.getTransactions(company.id);
+        setTransactions(txs || []);
+      } catch (err) {
+        toast.error("Failed to load transactions");
+      } finally {
+        setLoadingTransactions(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -105,17 +145,18 @@ export default function FleetCompanies() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {companies.map(c => (
-              <div key={c.id} className="p-4 rounded-xl border border-border bg-card">
-                <div className="flex justify-between items-start">
+              <div key={c.id} className="p-4 rounded-xl border border-border bg-card flex flex-col h-full">
+                <div className="flex justify-between items-start mb-2">
                   <div>
                     <div className="font-semibold text-base">{c.companyName}</div>
-                    <div className="text-xs text-muted-foreground mb-2">Contact: {c.contactPerson || "N/A"}</div>
+                    <div className="text-xs text-muted-foreground">Contact: {c.contactPerson || "N/A"}</div>
                   </div>
                   <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => handleEditClick(c)}>
                     Edit
                   </Button>
                 </div>
-                <div className="text-sm mt-3 border-t border-border pt-3">
+                
+                <div className="flex-1 text-sm mt-2 border-t border-border pt-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Email:</span>
                     <span>{c.email}</span>
@@ -124,6 +165,30 @@ export default function FleetCompanies() {
                     <span className="text-muted-foreground">Phone:</span>
                     <span>{c.phoneNumber}</span>
                   </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-border border-dashed">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                      <Droplet className="size-4 text-primary" />
+                      Fuel Account
+                    </div>
+                    {c.fuelAccount && Object.keys(c.fuelAccount.balances || {}).length > 0 ? (
+                      <div className="text-right flex flex-col gap-1">
+                        {Object.entries(c.fuelAccount.balances).map(([type, amount]) => (
+                          <div key={type}>
+                            <div className="text-sm font-bold text-primary">{amount.toLocaleString()}L</div>
+                            <div className="text-[10px] uppercase text-muted-foreground tracking-wider">{type}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground italic">No balances</div>
+                    )}
+                  </div>
+                  <Button variant="outline" className="w-full text-xs" size="sm" onClick={() => openManageFuel(c)}>
+                    <Fuel className="size-3 mr-2" /> View Account & History
+                  </Button>
                 </div>
               </div>
             ))}
@@ -236,6 +301,90 @@ export default function FleetCompanies() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditCompanyOpen(false)}>Cancel</Button>
             <Button onClick={handleUpdateCompany}>Update</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Fuel Dialog */}
+      <Dialog open={manageFuelOpen} onOpenChange={setManageFuelOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Fuel Account Details</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-6 py-4">
+            {activeCompanyForFuel && (
+              <>
+                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-primary">{activeCompanyForFuel.companyName}</h3>
+                    <p className="text-xs text-primary/80">
+                      {activeCompanyForFuel.fuelAccount ? "Active Fuel Account" : "No active fuel account"}
+                    </p>
+                  </div>
+                  {activeCompanyForFuel.fuelAccount && Object.keys(activeCompanyForFuel.fuelAccount.balances || {}).length > 0 && (
+                    <div className="text-right flex gap-4">
+                      {Object.entries(activeCompanyForFuel.fuelAccount.balances).map(([type, amount]) => (
+                        <div key={type}>
+                          <div className="text-2xl font-bold font-numeric text-primary">
+                            {amount.toLocaleString()} <span className="text-sm font-normal">L</span>
+                          </div>
+                          <div className="text-xs uppercase font-medium tracking-wide text-primary/70">
+                            {type}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-sm mb-3">Transaction History</h4>
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider text-left">
+                          <th className="px-4 py-2 font-medium">Date</th>
+                          <th className="px-4 py-2 font-medium">Vehicle ID</th>
+                          <th className="px-4 py-2 font-medium">Fuel Type</th>
+                          <th className="px-4 py-2 font-medium text-right">Deducted (L)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {loadingTransactions ? (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground italic">
+                              Loading transactions...
+                            </td>
+                          </tr>
+                        ) : transactions.length > 0 ? (
+                          transactions.map((tx, idx) => (
+                            <tr key={idx} className="hover:bg-muted/20">
+                              <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
+                                {new Date(tx.timestamp).toLocaleString()}
+                              </td>
+                              <td className="px-4 py-2 font-mono text-xs">{tx.vehicleId || "DEPOSIT"}</td>
+                              <td className="px-4 py-2 text-xs font-medium">{tx.fuelType}</td>
+                              <td className="px-4 py-2 text-right font-medium text-destructive">
+                                -{tx.quantityLitres}L
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground italic">
+                              No transactions recorded yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter className="mt-4 pt-4 border-t border-border">
+            <Button variant="outline" onClick={() => setManageFuelOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

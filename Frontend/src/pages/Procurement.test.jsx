@@ -22,6 +22,9 @@ vi.mock('@/lib/client', () => ({
       accept: vi.fn(),
       reject: vi.fn(),
       fulfill: vi.fn()
+    },
+    fuelAccounts: {
+      deposit: vi.fn(),
     }
   }
 }));
@@ -57,6 +60,15 @@ describe('Procurement Page', () => {
         unitPrice: 1.5,
         fleetCompanyId: 'fc-1',
         deliveryDate: '2026-07-01T00:00:00Z'
+      },
+      { 
+        id: 'req-3', 
+        procurementStatus: 'ACCEPTED', 
+        fuelQuantityLitres: 3000, 
+        fuelType: 'PETROL', 
+        unitPrice: 1.6,
+        fleetCompanyId: 'fc-1',
+        deliveryDate: '2026-07-02T00:00:00Z'
       }
     ]);
   });
@@ -180,6 +192,32 @@ describe('Procurement Page', () => {
     await waitFor(() => {
       expect(FleetFuelApi.procurement.accept).toHaveBeenCalledWith('req-2');
       expect(FleetFuelApi.procurement.listBySupplier).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('can fulfill a request and allocate fuel via FuelAccounts', async () => {
+    FleetFuelApi.procurement.fulfill.mockResolvedValue({});
+    FleetFuelApi.fuelAccounts.deposit.mockResolvedValue({});
+    
+    render(<Procurement />);
+    
+    // Switch to Fuel Supplier view
+    fireEvent.click(screen.getByText('View as Fuel Supplier'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('3000L of PETROL @ TZS 1.6/L')).toBeInTheDocument();
+      expect(screen.getByText('Fulfill')).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByText('Fulfill'));
+    
+    await waitFor(() => {
+      expect(FleetFuelApi.procurement.fulfill).toHaveBeenCalledWith('req-3');
+      expect(FleetFuelApi.fuelAccounts.deposit).toHaveBeenCalledWith({
+        fleetCompanyId: 'fc-1',
+        fuelType: 'PETROL',
+        quantityLitres: 3000
+      });
     });
   });
 

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
 
-import { FuelType } from "../FuelProcurementModule/Domain/enums/FuelType.mjs";
+import { FuelType } from "../SharedKernel/enums/FuelType.mjs";
 import { ProcurementRequestStatus } from "../FuelProcurementModule/Domain/enums/ProcurementRequestStatus.mjs";
 import { FuelOffer } from "../FuelProcurementModule/Domain/value-objects/FuelOffer.mjs";
 import { ProcurementRequest } from "../FuelProcurementModule/Domain/entities/ProcurementRequest.mjs";
@@ -97,5 +97,42 @@ test("FuelProcurement Domain Rules", async (t) => {
       /Cannot update details for a request in status: SUBMITTED/,
       "Should prevent detail changes after submission"
     );
+  });
+  await t.test("FuelSupplier update details and fuel offers", async () => {
+    const { FuelSupplier } = await import("../FuelProcurementModule/Domain/entities/FuelSupplier.mjs");
+    const supplier = FuelSupplier.create("Supplier 1", "Contact", "email@test.com", "123");
+
+    assert.throws(() => supplier.updateDetails("", "Contact", "email@test.com", "123"), /Supplier name is required/);
+    assert.throws(() => supplier.updateDetails("Supplier 1", "Contact", "", "123"), /Email is required/);
+
+    const offer1 = FuelOffer.create(FuelType.PETROL, 2000, 1000, 100);
+    supplier.addFuelOffer(offer1);
+    
+    // Add existing fuel type
+    const offer2 = FuelOffer.create(FuelType.PETROL, 2100, 1000, 100);
+    supplier.addFuelOffer(offer2);
+    
+    const offers = supplier.getFuelOffers();
+    assert.strictEqual(offers.length, 1);
+    assert.strictEqual(offers[0].getPricePerUnit(), 2100);
+
+    assert.throws(() => supplier.removeFuelOffer(""), /Fuel type is required/);
+    supplier.removeFuelOffer(FuelType.PETROL);
+    assert.strictEqual(supplier.getFuelOffers().length, 0);
+  });
+  await t.test("FleetCompany creation and updates", async () => {
+    const { FleetCompany } = await import("../FuelProcurementModule/Domain/entities/FleetCompany.mjs");
+    
+    assert.throws(() => FleetCompany.create("", "Contact", "email@test.com", "123"), /Company name is required/);
+    assert.throws(() => FleetCompany.create("Company", "Contact", "", "123"), /Email is required/);
+
+    const company = FleetCompany.create("Company", "Contact", "email@test.com", "123");
+    assert.strictEqual(company.getCompanyName(), "Company");
+    assert.strictEqual(company.getContactPerson(), "Contact");
+    assert.strictEqual(company.getEmail(), "email@test.com");
+    assert.strictEqual(company.getPhoneNumber(), "123");
+
+    assert.throws(() => company.updateDetails("", "Contact", "email@test.com", "123"), /Company name is required/);
+    assert.throws(() => company.updateDetails("Company", "Contact", "", "123"), /Email is required/);
   });
 });

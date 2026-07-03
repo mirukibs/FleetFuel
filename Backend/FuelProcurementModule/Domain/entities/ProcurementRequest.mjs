@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { FuelType } from "../enums/FuelType.mjs";
+import { FuelType } from "../../../SharedKernel/enums/FuelType.mjs";
 import { ProcurementRequestStatus } from "../enums/ProcurementRequestStatus.mjs";
 import { ValidationError, DomainError } from "../errors.mjs";
 

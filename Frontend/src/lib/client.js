@@ -84,5 +84,12 @@ export const FleetFuelApi = {
     accept: (id) => request(`/api/procurement-requests/${id}/accept`, { method: 'PUT' }),
     reject: (id) => request(`/api/procurement-requests/${id}/reject`, { method: 'PUT' }),
     fulfill: (id) => request(`/api/procurement-requests/${id}/fulfill`, { method: 'PUT' }),
+  },
+  fuelAccounts: {
+    deposit: (data) => request('/api/fuel-accounts/deposit', { method: 'POST', body: JSON.stringify(data) }),
+    simulateRefueling: (data) => request('/api/fuel-accounts/simulate-refueling', { method: 'POST', body: JSON.stringify(data) }),
+    get: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}`),
+    getBalance: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}/balance`),
+    getTransactions: (fleetCompanyId) => request(`/api/fuel-accounts/${fleetCompanyId}/transactions`),
   }
 };

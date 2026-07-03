@@ -18,6 +18,12 @@ vi.mock("../lib/client", () => ({
     telemetry: {
       submitReading: vi.fn(),
     },
+    fleetCompanies: {
+      list: vi.fn(),
+    },
+    fuelAccounts: {
+      simulateRefueling: vi.fn(),
+    },
   },
 }));
 
@@ -63,6 +69,7 @@ describe("Fleet Component", () => {
     FleetFuelApi.vehicles.list.mockResolvedValue([
       { id: "v1", licensePlate: "T123", make: "Toyota", sensor: null },
     ]);
+    FleetFuelApi.fleetCompanies.list.mockResolvedValue([]);
 
     render(<Fleet />);
 
@@ -93,6 +100,7 @@ describe("Fleet Component", () => {
     FleetFuelApi.vehicles.list.mockResolvedValue([
       { id: "v1", licensePlate: "T123", make: "Toyota", sensor: null },
     ]);
+    FleetFuelApi.fleetCompanies.list.mockResolvedValue([]);
     FleetFuelApi.vehicles.assignFuelSensor.mockResolvedValue({
       sensor: { id: "FS-TEST", serialNo: "FS-TEST" }
     });
@@ -122,6 +130,61 @@ describe("Fleet Component", () => {
       // Button should now be enabled since sensor exists
       // Wait actually, because we updated state dynamically, the UI should swap to Replace Sensor
       expect(screen.getByText("Replace Sensor")).toBeInTheDocument();
+    });
+  });
+
+  it("should open refuel dialog and call simulateRefueling", async () => {
+    const user = userEvent.setup();
+    FleetFuelApi.fleets.list.mockResolvedValue([]);
+    FleetFuelApi.vehicles.list.mockResolvedValue([
+      { id: "v1", licensePlate: "T123", make: "Toyota", sensor: "FS-001", fuelLevel: 50 },
+    ]);
+    FleetFuelApi.fleetCompanies.list.mockResolvedValue([
+      { id: "comp-1", companyName: "Test Company" }
+    ]);
+    FleetFuelApi.fuelAccounts.simulateRefueling.mockResolvedValue({});
+    FleetFuelApi.telemetry.submitReading.mockResolvedValue({});
+
+    render(<Fleet />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/T123/)).toBeInTheDocument();
+    });
+
+    // Open row
+    await user.click(screen.getByText("Toyota"));
+
+    // Click Refuel
+    const refuelBtn = await screen.findByText("Refuel");
+    await user.click(refuelBtn);
+
+    // Dialog should open
+    await waitFor(() => {
+      expect(screen.getByText(/Simulate refueling for/)).toBeInTheDocument();
+    });
+
+    // Select fleet company
+    const compSelect = screen.getByText("Select company account...").closest("select");
+    await user.selectOptions(compSelect, "comp-1");
+
+    // Enter quantity
+    const qtyInput = screen.getByPlaceholderText(/e.g. 50/i);
+    await user.type(qtyInput, "30");
+
+    // Submit
+    const submitBtn = screen.getByRole("button", { name: /Refuel Now/i });
+    await user.click(submitBtn);
+
+    // Verify simulateRefueling called
+    await waitFor(() => {
+      expect(FleetFuelApi.fuelAccounts.simulateRefueling).toHaveBeenCalledWith(expect.objectContaining({
+        fleetCompanyId: "comp-1",
+        vehicleId: "v1",
+        fuelType: "DIESEL",
+        quantityLitres: 30
+      }));
+      // Also telemetry should be updated
+      expect(FleetFuelApi.telemetry.submitReading).toHaveBeenCalled();
     });
   });
 });

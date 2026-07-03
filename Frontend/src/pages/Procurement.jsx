@@ -163,9 +163,23 @@ export default function Procurement() {
     setEditRequestOpen(true);
   };
 
-  const handleAction = async (id, actionStr) => {
+  const handleAction = async (req, actionStr) => {
     try {
-      await FleetFuelApi.procurement[actionStr](id);
+      await FleetFuelApi.procurement[actionStr](req.id);
+      
+      // Frontend Orchestration: When a supplier fulfills a request, allocate the fuel to the Fleet Company's Fuel Account
+      if (actionStr === "fulfill") {
+        try {
+          await FleetFuelApi.fuelAccounts.deposit({
+            fleetCompanyId: req.fleetCompanyId,
+            fuelType: req.fuelType,
+            quantityLitres: req.fuelQuantityLitres
+          });
+        } catch (e) {
+          toast.error("Fuel Account allocation failed: " + e.message);
+        }
+      }
+
       toast.success(`Request ${actionStr}ed successfully`);
       if (viewRole === "FLEET_COMPANY") {
         loadRequests(selectedCompanyId, "FLEET_COMPANY");
@@ -292,7 +306,7 @@ export default function Procurement() {
                         <Button size="sm" variant="outline" className="gap-2" onClick={() => openEditModal(req)}>
                           Edit
                         </Button>
-                        <Button size="sm" variant="default" className="gap-2" onClick={() => handleAction(req.id, 'submit')}>
+                        <Button size="sm" variant="default" className="gap-2" onClick={() => handleAction(req, 'submit')}>
                           <Send className="size-3" /> Submit
                         </Button>
                       </>
@@ -301,16 +315,16 @@ export default function Procurement() {
                     {/* Fuel Supplier Actions */}
                     {viewRole === "FUEL_SUPPLIER" && req.procurementStatus === "SUBMITTED" && (
                       <>
-                        <Button size="sm" variant="default" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleAction(req.id, 'accept')}>
+                        <Button size="sm" variant="default" className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleAction(req, 'accept')}>
                           <Check className="size-3" /> Accept
                         </Button>
-                        <Button size="sm" variant="destructive" className="gap-2" onClick={() => handleAction(req.id, 'reject')}>
+                        <Button size="sm" variant="destructive" className="gap-2" onClick={() => handleAction(req, 'reject')}>
                           <X className="size-3" /> Reject
                         </Button>
                       </>
                     )}
                     {viewRole === "FUEL_SUPPLIER" && req.procurementStatus === "ACCEPTED" && (
-                      <Button size="sm" variant="default" className="gap-2 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => handleAction(req.id, 'fulfill')}>
+                      <Button size="sm" variant="default" className="gap-2 bg-purple-600 hover:bg-purple-700 text-white" onClick={() => handleAction(req, 'fulfill')}>
                         <Truck className="size-3" /> Fulfill
                       </Button>
                     )}

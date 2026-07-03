@@ -81,8 +81,9 @@ export default function Dashboard() {
     }
 
     const currentLevel = Number(sourceVehicle.currentFuelLevel ?? 0);
-    const delta = (Math.random() - 0.55) * 8;
-    const nextLevel = Math.max(0, Math.min(100, Math.round((currentLevel + delta) * 10) / 10));
+    // Simulate fuel consumption (level only goes down, 0 to 4 units per tick)
+    const delta = -(Math.random() * 4);
+    const nextLevel = Math.max(0, Math.round((currentLevel + delta) * 10) / 10);
 
     try {
       await FleetFuelApi.telemetry.submitReading({

@@ -1,0 +1,29 @@
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+actor "Fleet Manager" as FM
+actor "Simulation Engine" as SE
+
+rectangle "Fuel Transaction Module" {
+
+    package "Fuel Account Management" {
+        FM --> (View Fuel Account)
+        FM --> (View Fuel Balance)
+        FM --> (View Fuel Transaction History)
+
+    }
+
+    package "Fuel Consumption Simulation" {
+        SE --> (Simulate Vehicle Refueling)
+
+        (Simulate Vehicle Refueling) ..> (Record Fuel Transaction) : <<include>>
+
+        (Simulate Vehicle Refueling) ..> (Deduct Fuel Balance) : <<include>>
+
+        (Simulate Vehicle Refueling) ..> (Trigger Telemetry Update) : <<include>>
+    }
+
+}
+
+@enduml
