@@ -1,0 +1,77 @@
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+actor "Fleet Company" as FC
+actor "Fuel Supplier" as FS
+
+rectangle "Fuel Procurement Module" {
+
+    package "Fleet Company Management" {
+        usecase "Register Fleet Company" as UC1
+        usecase "Update Company Details" as UC2
+    }
+
+    package "Supplier Discovery" {
+        usecase "View Fuel Suppliers" as UC3
+        usecase "View Supplier Fuel Offers" as UC4
+        usecase "Compare Fuel Prices" as UC5
+    }
+
+    package "Procurement" {
+        usecase "Create Procurement Request" as UC6
+        usecase "Update Procurement Request" as UC7
+        usecase "Submit Procurement Request" as UC8
+        usecase "View Procurement Request Status" as UC9
+    }
+
+    package "Supplier Management" {
+        usecase "Register Fuel Supplier" as UC10
+        usecase "Update Supplier Details" as UC11
+    }
+
+    package "Fuel Offer Management" {
+        usecase "Add Fuel Offer" as UC12
+        usecase "Update Fuel Offer" as UC13
+        usecase "Remove Fuel Offer" as UC14
+    }
+
+    package "Procurement Processing" {
+        usecase "View Procurement Requests" as UC15
+        usecase "Accept Procurement Request" as UC16
+        usecase "Reject Procurement Request" as UC17
+        usecase "Fulfill Procurement Request" as UC18
+    }
+
+    FC --> UC1
+    FC --> UC2
+
+    FC --> UC3
+    FC --> UC4
+    FC --> UC5
+
+    FC --> UC6
+    FC --> UC7
+    FC --> UC8
+    FC --> UC9
+
+    FS --> UC10
+    FS --> UC11
+
+    FS --> UC12
+    FS --> UC13
+    FS --> UC14
+
+    FS --> UC15
+    FS --> UC16
+    FS --> UC17
+    FS --> UC18
+
+    UC8 ..> UC6 : <<include>>
+
+    UC16 ..> UC15 : <<include>>
+    UC17 ..> UC15 : <<include>>
+
+    UC18 ..> UC16 : <<extend>>
+}
+@enduml

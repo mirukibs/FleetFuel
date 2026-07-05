@@ -12,5 +12,10 @@ export const listFleets = endpoint({
       fleetManagerId: 'manager-001'
     }
   ],
-  handler: () => services.fleet.listFleets()
+  handler: (request) => {
+    if (request.query?.fleetCompanyId) {
+      return services.fleet.listFleetsByCompany(request.query.fleetCompanyId);
+    }
+    return services.fleet.listFleets();
+  }
 });

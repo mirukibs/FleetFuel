@@ -12,5 +12,10 @@ export const listManagers = endpoint({
       email: 'asha@example.com'
     }
   ],
-  handler: () => services.manager.listManagers()
+  handler: (request) => {
+    if (request.query?.fleetCompanyId) {
+      return services.manager.listManagersByCompany(request.query.fleetCompanyId);
+    }
+    return services.manager.listManagers();
+  }
 });

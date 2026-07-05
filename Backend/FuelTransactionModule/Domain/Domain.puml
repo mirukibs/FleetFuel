@@ -1,0 +1,84 @@
+@startuml
+skinparam titleFontSize 18
+title Fuel Transaction Module - Domain Model
+
+Package "Fuel Transaction Module" {
+
+    Package "Domain" {
+
+        Package "Entities" {
+
+            Package "Fuel Account Aggregate" <<Rectangle>> {
+
+                Class FuelAccount <<AggregateRoot>> {
+                    - id: string
+                    - fleetCompanyId: string
+                    - balances: Map<FuelType, double>
+                    - transactions: List<FuelTransaction>
+                    - createdAt: Date
+                    - updatedAt: Date
+                    --
+                    + {static} create(fleetCompanyId: string): FuelAccount
+                    + depositFuel(fuelType: FuelType, quantityLitres: double): void
+                    + simulateRefueling(vehicleId: string, fuelType: FuelType, quantityLitres: double, timestamp: Date): void
+                    + getBalances(): Map<FuelType, double>
+                    + getTransactions(): List<FuelTransaction>
+                }
+
+                Class FuelTransaction {
+                    - id: string
+                    - vehicleId: string
+                    - fuelType: FuelType
+                    - quantityLitres: double
+                    - timestamp: Date
+                    --
+                    + {static} create(vehicleId: string, fuelType: FuelType, quantityLitres: double, timestamp: Date): FuelTransaction
+                    + getVehicleId(): string
+                    + getFuelType(): FuelType
+                    + getQuantityLitres(): double
+                    + getTimestamp(): Date
+                }
+
+                FuelAccount "1" -- "0..*" FuelTransaction : records >
+            }
+        }
+
+        Package "Enums" {
+
+            Enum FuelType {
+                DIESEL
+                PETROL
+                ELECTRICITY
+            }
+
+        }
+
+        Package "Repositories" {
+
+            Interface FuelAccountRepository {
+                + save(account: FuelAccount): void
+                + findById(id: string): FuelAccount
+                + findByFleetCompanyId(fleetCompanyId: string): FuelAccount
+            }
+
+        }
+
+        Package "External References" {
+
+            Class FleetCompany <<External>> {
+                + fleetCompanyId
+            }
+
+            Class Vehicle <<External>> {
+                + vehicleId
+            }
+
+        }
+
+        FuelAccount ..> FleetCompany : references by fleetCompanyId
+        FuelTransaction ..> Vehicle : references by vehicleId
+
+    }
+
+}
+@enduml

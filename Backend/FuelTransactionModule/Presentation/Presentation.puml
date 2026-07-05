@@ -1,0 +1,47 @@
+@startuml
+skinparam titleFontSize 18
+title Fuel Transaction Module - Presentation Layer Design
+
+Package FuelTransactionModule {
+
+    ' =========================
+    ' APPLICATION LAYER CONTEXT
+    ' =========================
+    Package Application {
+
+        Package Services {
+            Class FuelTransactionApplicationService
+        }
+
+    }
+
+    ' =========================
+    ' PRESENTATION LAYER
+    ' =========================
+    Package Presentation {
+
+        Package Controllers {
+
+            Class FuelAccountController {
+
+                - service: FuelTransactionApplicationService
+
+                + depositFuel(req: HTTPRequest): HTTPResponse [POST /api/fuel-accounts/deposit]
+                + simulateRefueling(req: HTTPRequest): HTTPResponse [POST /api/fuel-accounts/simulate-refueling]
+                + viewFuelAccount(fleetCompanyId: string): HTTPResponse [GET /api/fuel-accounts/{fleetCompanyId}]
+                + viewFuelBalance(fleetCompanyId: string): HTTPResponse [GET /api/fuel-accounts/{fleetCompanyId}/balance]
+                + viewTransactionHistory(fleetCompanyId: string): HTTPResponse [GET /api/fuel-accounts/{fleetCompanyId}/transactions]
+
+            }
+
+        }
+
+    }
+
+    ' =========================
+    ' CONTROLLER DEPENDENCY
+    ' =========================
+    FuelAccountController --> FuelTransactionApplicationService
+
+}
+@enduml

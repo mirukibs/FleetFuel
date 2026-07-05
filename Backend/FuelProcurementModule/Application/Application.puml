@@ -1,0 +1,169 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+top to bottom direction
+title Fuel Procurement Module - Application Layer
+
+Package FuelProcurementModule {
+
+    Package Domain {
+
+        Package Repositories {
+
+            Interface ProcurementRequestRepository {
+                + save(request: ProcurementRequest): void
+                + findById(id: string): ProcurementRequest
+            }
+
+            Interface FleetCompanyRepository {
+                + save(company: FleetCompany): void
+                + findById(id: string): FleetCompany
+                + findAll(): FleetCompany[]
+            }
+
+            Interface FuelSupplierRepository {
+                + save(supplier: FuelSupplier): void
+                + findById(id: string): FuelSupplier
+                + findAll(): FuelSupplier[]
+            }
+        }
+    }
+
+    Package Application {
+
+        Package DTOs {
+
+            Class RegisterFleetCompanyInput {
+                + companyName: string
+                + contactPerson: string
+                + email: string
+                + phoneNumber: string
+            }
+
+            Class UpdateFleetCompanyInput {
+                + companyName: string
+                + contactPerson: string
+                + email: string
+                + phoneNumber: string
+            }
+
+            Class RegisterFuelSupplierInput {
+                + supplierName: string
+                + contactPerson: string
+                + email: string
+                + phoneNumber: string
+            }
+
+            Class UpdateFuelSupplierInput {
+                + supplierName: string
+                + contactPerson: string
+                + email: string
+                + phoneNumber: string
+            }
+
+            Class AddFuelOfferInput {
+                + fuelType: FuelType
+                + pricePerUnit: double
+                + availableQuantityLitres: int
+                + minimumOrderQuantityLitres: int
+            }
+
+            Class UpdateFuelOfferInput {
+                + fuelType: FuelType
+                + pricePerUnit: double
+                + availableQuantityLitres: int
+                + minimumOrderQuantityLitres: int
+            }
+
+            Class CreateProcurementRequestInput {
+                + fleetCompanyId: string
+                + fuelSupplierId: string
+                + fuelType: FuelType
+                + fuelQuantityLitres: int
+            }
+
+            Class UpdateProcurementRequestInput {
+                + fuelQuantityLitres: int
+                + unitPrice: double
+            }
+
+            Class FuelSupplierListingDTO {
+                + supplierId: string
+                + supplierName: string
+            }
+
+            Class FuelOfferDTO {
+                + fuelType: FuelType
+                + pricePerUnit: double
+            }
+
+            Class ProcurementRequestStatusDTO {
+                + requestId: string
+                + status: ProcurementRequestStatus
+            }
+        }
+
+        Package Services {
+
+            Class FleetCompanyApplicationService {
+                - companyRepo: FleetCompanyRepository
+                - supplierRepo: FuelSupplierRepository
+                --
+                + registerCompany(input: RegisterFleetCompanyInput): void
+                + updateCompany(id: string, input: UpdateFleetCompanyInput): void
+                + viewFuelSuppliers(): List<FuelSupplierListingDTO>
+                + viewSupplierFuelOffers(supplierId: string): List<FuelOfferDTO>
+                + compareFuelPrices(fuelType: FuelType): List<FuelOfferDTO>
+            }
+
+            Class FuelSupplierApplicationService {
+                - supplierRepo: FuelSupplierRepository
+                --
+                + registerSupplier(input: RegisterFuelSupplierInput): void
+                + updateSupplier(id: string, input: UpdateFuelSupplierInput): void
+                + addFuelOffer(supplierId: string, input: AddFuelOfferInput): void
+                + updateFuelOffer(supplierId: string, input: UpdateFuelOfferInput): void
+                + removeFuelOffer(supplierId: string, fuelType: FuelType): void
+            }
+
+            Class ProcurementApplicationService {
+                - requestRepo: ProcurementRequestRepository
+                - companyRepo: FleetCompanyRepository
+                - supplierRepo: FuelSupplierRepository
+                --
+                + createRequest(input: CreateProcurementRequestInput): void
+                + updateRequest(id: string, input: UpdateProcurementRequestInput): void
+                + submitRequest(id: string): void
+                + viewRequestStatus(id: string): ProcurementRequestStatusDTO
+                + viewProcurementRequests(): List<ProcurementRequestDTO>
+                + acceptRequest(id: string): void
+                + rejectRequest(id: string): void
+                + fulfillRequest(id: string): void
+            }
+        }
+
+        FleetCompanyApplicationService ..> RegisterFleetCompanyInput
+        FleetCompanyApplicationService ..> UpdateFleetCompanyInput
+        FleetCompanyApplicationService ..> FuelSupplierListingDTO
+        FleetCompanyApplicationService ..> FuelOfferDTO
+
+        FuelSupplierApplicationService ..> RegisterFuelSupplierInput
+        FuelSupplierApplicationService ..> UpdateFuelSupplierInput
+        FuelSupplierApplicationService ..> AddFuelOfferInput
+        FuelSupplierApplicationService ..> UpdateFuelOfferInput
+
+        ProcurementApplicationService ..> CreateProcurementRequestInput
+        ProcurementApplicationService ..> UpdateProcurementRequestInput
+        ProcurementApplicationService ..> ProcurementRequestStatusDTO
+    }
+
+    FleetCompanyApplicationService -up-> FleetCompanyRepository
+    FleetCompanyApplicationService -up-> FuelSupplierRepository
+
+    FuelSupplierApplicationService -up-> FuelSupplierRepository
+
+    ProcurementApplicationService -up-> ProcurementRequestRepository
+    ProcurementApplicationService -up-> FleetCompanyRepository
+    ProcurementApplicationService -up-> FuelSupplierRepository
+}
+@enduml
