@@ -1,8 +1,15 @@
-import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, Search, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { Link } from "react-router-dom";
 
-export function Topbar({ onMenu }) {
+const formatRole = (role) => role === "fuel_supplier" ? "Fuel Supplier" : "Fleet Company";
+
+const getInitials = (email = "") => {
+  const [name = "U"] = email.split("@");
+  return name.slice(0, 2).toUpperCase();
+};
+
+export function Topbar({ onMenu, user, onLogout }) {
   const { theme, toggle } = useTheme();
 
   return (
@@ -41,12 +48,19 @@ export function Topbar({ onMenu }) {
 
         <div className="ml-2 flex items-center gap-3 pl-3 border-l border-border">
           <div className="text-right hidden sm:block">
-            <div className="text-sm font-semibold leading-tight">Amelia Cole</div>
-            <div className="text-[11px] text-muted-foreground">Fleet Operations · Admin</div>
+            <div className="text-sm font-semibold leading-tight">{user?.email}</div>
+            <div className="text-[11px] text-muted-foreground">{formatRole(user?.role)}</div>
           </div>
           <div className="size-9 rounded-full bg-gradient-primary text-primary-foreground grid place-items-center font-semibold text-sm">
-            AC
+            {getInitials(user?.email)}
           </div>
+          <button
+            onClick={onLogout}
+            className="p-2.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition"
+            aria-label="Log out"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
       </div>
     </header>
