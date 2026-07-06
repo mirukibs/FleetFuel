@@ -1,0 +1,42 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Procurement Module Architecture
+
+Package FuelProcurementModule {
+    Package Domain {
+        Class FleetCompany <<AggregateRoot>>
+        Class FuelSupplier <<AggregateRoot>>
+        Class ProcurementRequest <<AggregateRoot>>
+    }
+
+    Package Application {
+        Class ProcurementApplicationService
+        Class FleetCompanyApplicationService
+        Class FuelSupplierApplicationService
+    }
+    
+    Package Infrastructure {
+        Class InMemoryFleetCompanyRepository
+        Class InMemoryFuelSupplierRepository
+        Class InMemoryProcurementRequestRepository
+        Class inMemoryDatabase
+    }
+
+    Package Presentation {
+        Class ProcurementController
+    }
+}
+
+ProcurementApplicationService --> FleetCompany
+ProcurementApplicationService --> FuelSupplier
+ProcurementApplicationService --> ProcurementRequest
+FleetCompanyApplicationService --> FleetCompany
+FuelSupplierApplicationService --> FuelSupplier
+InMemoryFleetCompanyRepository --> inMemoryDatabase
+InMemoryFuelSupplierRepository --> inMemoryDatabase
+InMemoryProcurementRequestRepository --> inMemoryDatabase
+ProcurementController --> ProcurementApplicationService
+Application --> Infrastructure
+
+@enduml

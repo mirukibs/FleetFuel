@@ -1,0 +1,48 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title Fuel Procurement Module - Infrastructure Layer
+
+Package FuelProcurementModule {
+    Package Domain {
+        Interface FleetCompanyRepository
+        Interface FuelSupplierRepository
+        Interface ProcurementRequestRepository
+    }
+
+    Package Infrastructure {
+        Class InMemoryFleetCompanyRepository {
+            - db: inMemoryDatabase
+            + save(company: FleetCompany): void
+            + findById(id: string): FleetCompany
+            + findAll(): List<FleetCompany>
+        }
+
+        Class InMemoryFuelSupplierRepository {
+            - db: inMemoryDatabase
+            + save(supplier: FuelSupplier): void
+            + findById(id: string): FuelSupplier
+            + findAll(): List<FuelSupplier>
+        }
+
+        Class InMemoryProcurementRequestRepository {
+            - db: inMemoryDatabase
+            + save(request: ProcurementRequest): void
+            + findById(id: string): ProcurementRequest
+            + findAll(): List<ProcurementRequest>
+        }
+
+        Class inMemoryDatabase <<Database>> {
+            + collections: Object
+        }
+    }
+
+    InMemoryFleetCompanyRepository ..|> FleetCompanyRepository
+    InMemoryFuelSupplierRepository ..|> FuelSupplierRepository
+    InMemoryProcurementRequestRepository ..|> ProcurementRequestRepository
+
+    InMemoryFleetCompanyRepository --> inMemoryDatabase : Reads/Writes Fleet Companies
+    InMemoryFuelSupplierRepository --> inMemoryDatabase : Reads/Writes Fuel Suppliers
+    InMemoryProcurementRequestRepository --> inMemoryDatabase : Reads/Writes Procurement Requests
+}
+@enduml

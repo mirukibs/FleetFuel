@@ -7,10 +7,10 @@ The **vehicle and fuel telemetry module** is responsible for managing fleet vehi
 It addresses the lack of real-time visibility of fuel consumption in fleet vehicles. It achieves this by generating simulated fuel sensor readings from the fuel sensor through the "simulation engine", process and log it, allowing for viewing later by the fleet manager.
 
 The module follows a **layered architecture** consisting of the following layers:
-1. **Domain layer**, where all core business logic lives with its entities isolated from infrastructure specific implementation.
-2. **Application layer** which orchestrates module use cases, coordinating them to their designated business logic in the domain layer.
-3. **Infrastructure layer**, where actual infrastructure specific technologies are implemented to realize the business logic.
-4. **Presentation layer** which presents an interface for entities outside the module to communicate with it, implementing technologies such as REST APIs.
+1. **[Domain layer](Domain/README.md)**, where all core business logic lives with its entities isolated from infrastructure specific implementation.
+2. **[Application layer](Application/README.md)** which orchestrates module use cases, coordinating them to their designated business logic in the domain layer.
+3. **[Infrastructure layer](Infrastructure/README.md)**, where actual infrastructure specific technologies are implemented to realize the business logic.
+4. **[Presentation layer](Presentation/README.md)** which presents an interface for entities outside the module to communicate with it, implementing technologies such as REST APIs.
 
 This architecture realizes the modularity design principle due to how each layer it encapsulates its own data and behavior while exposing clear interfaces for other layer to communicate with it - consequently promoting low coupling.
 
@@ -23,6 +23,10 @@ The module currently supports:
 4. Fuel sensor reading simulation through the simulation engine
 5. Dashboard viewing of live fuel sensor readings for fleet vehicles
 6. Simple fuel theft alerts through simulated fuel sensor readings
+
+## Architecture
+
+![alt text](Architecture.png)
 
 ## Scope  
 The scope of this module is limited to the solving the core problem: **difficulty tracking real-time fuel consumption in a company's fleet**

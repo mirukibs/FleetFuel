@@ -1,7 +1,7 @@
 ## The Presentation Layer
 Similar to the application layer, the presentation layer acts as a **gateway to the external world**. But in contrast, it rests between the environment outside the module and the application layer and not the domain layer. Furthermore, the presentation layer includes infrastructure specific technologies to accomplish its function. Such technologies, and one that we use in our design, include **HTTP REST APIs**. The layer will host the api definitions as contracts for how data is catered to the outside world and what is required from outside to receive "service" from the module.
 
-![Presentation](../../../Docs/presentation.png "Presentation")
+![alt text](presentation.png)
 
 These contracts are defined in the **controllers** within the layer. Each HTTP endpoint is implemented in its own module file. BFast discovers those endpoint descriptors recursively from the configured Presentation functions folder.
 

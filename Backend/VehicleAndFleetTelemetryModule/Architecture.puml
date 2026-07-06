@@ -1,0 +1,48 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title Vehicle and Fleet Telemetry Module Architecture
+
+Package VehicleAndFleetTelemetryModule {
+    Package Domain {
+        Class Vehicle <<AggregateRoot>>
+        Class Fleet <<AggregateRoot>>
+        Class FleetManager <<AggregateRoot>>
+    }
+
+    Package Application {
+        Class VehicleApplicationService
+        Class FleetApplicationService
+        Class TelemetryApplicationService
+        Class FleetManagerApplicationService
+    }
+
+    Package Infrastructure {
+        Class InMemoryVehicleRepository
+        Class InMemoryFleetRepository
+        Class InMemoryFleetManagerRepository
+        Class inMemoryDatabase
+    }
+
+    Package Presentation {
+        Class VehicleController
+        Class FleetController
+        Class TelemetryController
+        Class FleetManagerController
+    }
+}
+
+VehicleApplicationService --> Vehicle
+FleetApplicationService --> Fleet
+TelemetryApplicationService --> Telemetry
+FleetManagerApplicationService --> FleetManager
+InMemoryVehicleRepository --> inMemoryDatabase
+InMemoryFleetRepository --> inMemoryDatabase
+InMemoryFleetManagerRepository --> inMemoryDatabase
+VehicleController --> VehicleApplicationService
+FleetController --> FleetApplicationService
+TelemetryController --> TelemetryApplicationService
+FleetManagerController --> FleetManagerApplicationService
+Application --> Infrastructure
+
+@enduml

@@ -1,0 +1,35 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Authentication Module Architecture
+
+Package AuthenticationModule {
+    Package Domain {
+        Class User <<AggregateRoot>>
+        Class Role <<ValueObject>>
+        Class Email <<ValueObject>>
+        Class Password <<ValueObject>>
+    }
+
+    Package Application {
+        Class AuthenticationApplicationService
+    }
+
+    Package Infrastructure {
+        Class InMemoryUserRepository
+        Class InMemorySessionRepository
+        Class inMemoryDatabase
+    }
+
+    Package Presentation {
+        Class AuthenticationController
+    }
+}
+
+AuthenticationController --> AuthenticationApplicationService
+AuthenticationApplicationService --> User
+AuthenticationApplicationService --> InMemoryUserRepository
+AuthenticationApplicationService --> InMemorySessionRepository
+InMemoryUserRepository --> inMemoryDatabase
+InMemorySessionRepository --> inMemoryDatabase
+@enduml
