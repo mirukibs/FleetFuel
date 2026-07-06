@@ -4,12 +4,23 @@
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3003';
+const AUTH_STORAGE_KEY = 'fleetfuel.auth';
+
+function getStoredToken() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null')?.token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 async function request(path, options = {}) {
+  const token = getStoredToken();
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -23,6 +34,12 @@ async function request(path, options = {}) {
 }
 
 export const FleetFuelApi = {
+  auth: {
+    createUser: (data) => request('/api/auth/users', { method: 'POST', body: JSON.stringify(data) }),
+    login: (data) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    getSession: () => request('/api/auth/session'),
+    logout: () => request('/api/auth/logout', { method: 'POST' }),
+  },
   managers: {
     list: () => request('/api/managers'),
     listByCompany: (fleetCompanyId) => request(`/api/managers?fleetCompanyId=${fleetCompanyId}`),

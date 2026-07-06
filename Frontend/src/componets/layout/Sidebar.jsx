@@ -1,13 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Truck, Fuel, X, BarChart3, Settings, Store, ClipboardList, Building2 } from "lucide-react";
+import { LayoutDashboard, Truck, Fuel, X, Store, ClipboardList, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/app/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
-  { to: "/app/vehicles",      label: "Fleet",         icon: Truck },
-  { to: "/app/suppliers",     label: "Suppliers",     icon: Store },
-  { to: "/app/fleet-companies", label: "Fleet Companies", icon: Building2 },
-  { to: "/app/procurement",   label: "Procurement",   icon: ClipboardList },
+  { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["fleet_company", "fuel_supplier"] },
+  { to: "/app/vehicles", label: "Fleet", icon: Truck, roles: ["fleet_company"] },
+  { to: "/app/suppliers", label: "Suppliers", icon: Store, roles: ["fuel_supplier"] },
+  { to: "/app/fleet-companies", label: "Fleet Companies", icon: Building2, roles: ["fleet_company"] },
+  { to: "/app/procurement", label: "Procurement", icon: ClipboardList, roles: ["fleet_company", "fuel_supplier"] },
 ];
 
 function NavItem({ item, onClose }) {
@@ -37,7 +37,9 @@ function NavItem({ item, onClose }) {
   );
 }
 
-export function Sidebar({ open, onClose }) {
+export function Sidebar({ open, onClose, role }) {
+  const visibleNav = nav.filter((item) => item.roles.includes(role));
+
   return (
     <>
       {open && (
@@ -73,7 +75,7 @@ export function Sidebar({ open, onClose }) {
           <div>
             <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50">Workspace</div>
             <ul className="space-y-1">
-              {nav.map((item) => <NavItem key={item.to} item={item} onClose={onClose} />)}
+              {visibleNav.map((item) => <NavItem key={item.to} item={item} onClose={onClose} />)}
             </ul>
           </div>
 
