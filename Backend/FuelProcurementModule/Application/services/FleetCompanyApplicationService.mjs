@@ -7,6 +7,11 @@ export class FleetCompanyApplicationService {
   }
 
   registerFleetCompany(input) {
+    const existing = this.fleetCompanyRepo.findAll();
+    if (existing.length > 0) {
+      throw new Error("A fleet company is already registered on this instance.");
+    }
+
     const company = new FleetCompany({
       id: input.id,
       companyName: input.companyName,

@@ -1,131 +1,61 @@
 # FleetFuel Backend
 
-This backend runs the Vehicle and Fleet Telemetry module with `bfast-function`.
+This is the backend repository for the FleetFuel platform. It is built using Node.js and follows a modular, domain-driven design (DDD) layered architecture.
+
+## Architecture Overview
+
+The backend is built as a **Modular Monolith**. It is divided into four primary modules, each encapsulating its own domain logic:
+1. **AuthenticationModule**: Manages user identity, registration, session handling, and role-based access.
+2. **FuelProcurementModule**: Manages the marketplace interactions between Fleet Companies and Fuel Suppliers, including fuel offers and procurement requests.
+3. **FuelTransactionModule**: The financial ledger that tracks fuel deposits (from procurement) and withdrawals (refueling simulations).
+4. **VehicleAndFleetTelemetryModule**: Manages fleets, vehicles, sensors, and processes simulated real-time telemetry data.
+
+Each module is internally structured into four layers:
+- **Domain Layer**: Core business entities and rules.
+- **Application Layer**: Orchestrates use cases and bridges the presentation with the domain.
+- **Infrastructure Layer**: Data persistence and third-party integrations.
+- **Presentation Layer**: Exposes REST API endpoints via `bfast`.
 
 ## Prerequisites
 
-- Node.js 20 or newer
-- npm
+- Node.js (v18 or higher recommended)
+- npm (Node Package Manager)
 
-## Install
+## Setup and Installation
 
-```bash
-cd Backend
-npm ci
-```
+1. **Navigate to the Backend directory:**
+   ```bash
+   cd Backend
+   ```
 
-Use `npm install` instead of `npm ci` only when intentionally updating dependencies.
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## Run Locally
+## Running the Application
 
-Development server with file watching:
-
-```bash
-cd Backend
-npm run start:dev
-```
-
-Start the production-style local server without file watching:
+To start the backend server in development mode:
 
 ```bash
-cd Backend
-npm start
+npm run start
 ```
+*Note: The backend runs using the `bfast` framework, which automatically discovers and mounts endpoints from the respective presentation layers.*
 
-The backend listens on port `3003` by default. Override it with `PORT`:
+## Running Tests
+
+The backend utilizes Node.js's native test runner (`node --test`).
+
+To execute the entire test suite across all modules:
 
 ```bash
-cd Backend
-PORT=4000 npm start
-```
-
-## Frontend Integration
-
-The frontend expects this backend at `http://localhost:3003` by default. If you run the backend on another port or host, set `VITE_API_URL` in the frontend before starting it.
-
-## Entrypoint and Discovery
-
-The backend entrypoint is `Backend/index.mjs`. It starts `bfast-function` with local functions enabled and points BFast at:
-
-```text
-bfastJsonPath: Backend/bfast.json
-functionsDirPath: Backend/VehicleAndFleetTelemetryModule/Presentation
-assets: Backend/Assets
-```
-
-`functionsDirPath` is the important setting for endpoint discovery. BFast recursively scans that Presentation folder and loads endpoint descriptors from each controller module, so endpoint files do not need to be re-exported from `Presentation/index.mjs`.
-
-Useful runtime endpoints:
-
-```bash
-curl http://localhost:3003/functions-health
-curl "http://localhost:3003/functions-all"
-curl "http://localhost:3003/functions-all?format=json"
-```
-
-Expected discovered application endpoints include:
-
-```text
-POST   /api/managers
-GET    /api/managers
-GET    /api/managers/:id
-POST   /api/fleets
-GET    /api/fleets
-GET    /api/fleets/:id
-GET    /api/fleets/:fleetId/vehicles
-PUT    /api/fleets/:id/name
-POST   /api/vehicles
-GET    /api/vehicles
-GET    /api/vehicles/:id
-PUT    /api/vehicles/:id
-POST   /api/vehicles/:id/fleet
-DELETE /api/vehicles/:id/fleet
-DELETE /api/vehicles/:id
-POST   /api/vehicles/:id/fuel-sensor
-POST   /api/telemetry/readings
-GET    /api/telemetry/readings
-GET    /api/vehicles/:id/telemetry/readings
-GET    /api/fleets/:fleetId/dashboard
-```
-
-## Run Tests
-
-```bash
-cd Backend
 npm test
 ```
 
-The current test suite verifies:
+## Documentation
 
-- BFast discovers endpoint modules directly from the Presentation folder.
-- Each endpoint lives in its own module file.
-- The in-memory backend flow persists fleet managers, fleets, vehicles, sensors, telemetry readings, and dashboard output.
-
-## BFast Config
-
-`Backend/bfast.json` controls function discovery ignore rules:
-
-```json
-{
-  "ignore": [
-    "**/node_modules/**",
-    "**/specs/**",
-    "**/*.specs.js",
-    "**/*.specs.mjs"
-  ]
-}
-```
-
-Keep tests and support files outside endpoint descriptor exports, or add explicit ignore rules here when needed.
-
-## Current Persistence
-
-The infrastructure layer uses in-memory repositories that simulate the future PostgreSQL implementation. Data is reset when the Node process restarts.
-
-The intended replacement point for PostgreSQL is:
-
-```text
-VehicleAndFleetTelemetryModule/Infrastructure/repositories/
-```
-
-Keep application services depending on repository interfaces and behavior so the persistence layer can be swapped without changing endpoint modules.
+Detailed architectural documentation, including PlantUML diagrams and layer explanations, can be found within the `README.md` files located in each module's directory:
+- [Authentication Module Documentation](./AuthenticationModule/README.md)
+- [Fuel Procurement Module Documentation](./FuelProcurementModule/README.md)
+- [Fuel Transaction Module Documentation](./FuelTransactionModule/README.md)
+- [Vehicle & Fleet Telemetry Module Documentation](./VehicleAndFleetTelemetryModule/README.md)

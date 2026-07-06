@@ -28,14 +28,11 @@ Package FuelProcurementModule {
                 + updateCompany(id: string, req: HTTPRequest): HTTPResponse
                   [PUT /api/fleet-companies/{id}]
 
-                + getFuelSuppliers(): HTTPResponse
-                  [GET /api/fuel-suppliers]
+                + getFleetCompany(id: string, req: HTTPRequest): HTTPResponse
+                  [GET /api/fleet-companies/{id}]
 
-                + getSupplierOffers(id: string): HTTPResponse
-                  [GET /api/fuel-suppliers/{id}/offers]
-
-                + compareFuelPrices(fuelType: string): HTTPResponse
-                  [GET /api/fuel-offers/compare]
+                + listFleetCompanies(req: HTTPRequest): HTTPResponse
+                  [GET /api/fleet-companies]
             }
 
             Class FuelSupplierController {
@@ -55,6 +52,15 @@ Package FuelProcurementModule {
 
                 + removeFuelOffer(supplierId: string, fuelType: string): HTTPResponse
                   [DELETE /api/fuel-suppliers/{id}/offers/{fuelType}]
+
+                + getFuelSuppliers(): HTTPResponse
+                  [GET /api/fuel-suppliers]
+
+                + getSupplierOffers(id: string): HTTPResponse
+                  [GET /api/fuel-suppliers/{id}/offers]
+
+                + compareFuelPrices(fuelType: string): HTTPResponse
+                  [GET /api/fuel-offers/compare]
             }
 
             Class ProcurementController {

@@ -1,0 +1,43 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title Authentication Module - Infrastructure Layer
+
+Package AuthenticationModule {
+    Package Domain {
+        Interface UserRepository
+        Interface SessionRepository
+    }
+
+    Package Infrastructure {
+        Class InMemoryUserRepository {
+            - db: inMemoryDatabase
+            + save(user: User): User
+            + findByEmail(email: string): User | null
+            + findById(id: string): User | null
+        }
+
+        Class InMemorySessionRepository {
+            - db: inMemoryDatabase
+            + save(session: Session): Session
+            + findByToken(token: string): Session | null
+            + deleteByToken(token: string): boolean
+        }
+
+        Class PasswordHasher {
+            + hash(password: string): string
+            + verify(password: string, hash: string): boolean
+        }
+
+        Class inMemoryDatabase <<Database>> {
+            + collections: Object
+        }
+    }
+
+    InMemoryUserRepository ..|> UserRepository
+    InMemorySessionRepository ..|> SessionRepository
+    
+    InMemoryUserRepository --> inMemoryDatabase : Reads/Writes Users
+    InMemorySessionRepository --> inMemoryDatabase : Reads/Writes Sessions
+}
+@enduml

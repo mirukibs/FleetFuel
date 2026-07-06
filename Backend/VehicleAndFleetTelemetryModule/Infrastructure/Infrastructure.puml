@@ -1,0 +1,52 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title Vehicle and Fleet Telemetry Module - Infrastructure Layer
+
+Package VehicleAndFleetTelemetryModule {
+    Package Domain {
+        Interface VehicleRepository
+        Interface FleetRepository
+        Interface FleetManagerRepository
+    }
+
+    Package Infrastructure {
+        Class InMemoryVehicleRepository {
+            - db: inMemoryDatabase
+            + save(vehicle: Vehicle): void
+            + findById(id: string): Vehicle
+            + findByFleetId(fleetId: string): List<Vehicle>
+            + findAll(): List<Vehicle>
+            + delete(id: string): Vehicle
+        }
+
+        Class InMemoryFleetRepository {
+            - db: inMemoryDatabase
+            + save(fleet: Fleet): void
+            + findById(id: string): Fleet
+            + findByCompanyId(companyId: string): List<Fleet>
+            + findAll(): List<Fleet>
+        }
+
+        Class InMemoryFleetManagerRepository {
+            - db: inMemoryDatabase
+            + save(manager: FleetManager): void
+            + findById(id: string): FleetManager
+            + findByCompanyId(companyId: string): List<FleetManager>
+            + findAll(): List<FleetManager>
+        }
+
+        Class inMemoryDatabase <<Database>> {
+            + collections: Object
+        }
+    }
+
+    InMemoryVehicleRepository ..|> VehicleRepository
+    InMemoryFleetRepository ..|> FleetRepository
+    InMemoryFleetManagerRepository ..|> FleetManagerRepository
+
+    InMemoryVehicleRepository --> inMemoryDatabase : Reads/Writes Vehicles and Readings
+    InMemoryFleetRepository --> inMemoryDatabase : Reads/Writes Fleets
+    InMemoryFleetManagerRepository --> inMemoryDatabase : Reads/Writes Fleet Managers
+}
+@enduml

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Suppliers from './Suppliers';
 import { FleetFuelApi } from '@/lib/client';
 
@@ -16,6 +17,16 @@ vi.mock('@/lib/client', () => ({
     }
   }
 }));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 describe('Suppliers Page', () => {
   beforeEach(() => {
@@ -36,64 +47,37 @@ describe('Suppliers Page', () => {
     ]);
   });
 
+  const fuelSupplierUser = { role: 'fuel_supplier', affiliatedServiceId: 'supp-1' };
+
   it('renders a list of suppliers', async () => {
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
     
     // Wait for the suppliers to load
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
     
     expect(screen.getByText('John Shell')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument(); // 1 active offer
   });
 
-  it('opens add supplier modal and calls API on submit', async () => {
-    FleetFuelApi.fuelSuppliers.register.mockResolvedValue({});
-    
-    render(<Suppliers />);
-    
-    // Wait for load
-    await waitFor(() => {
-      expect(screen.getByText('Add Supplier')).toBeInTheDocument();
-    });
-    
-    // Open modal
-    fireEvent.click(screen.getByText('Add Supplier'));
-    
-    // Wait for modal to open
-    await waitFor(() => {
-      expect(screen.getByText('Register a new fuel supplier on the marketplace.')).toBeInTheDocument();
-    });
-    
-    // Fill form
-    const inputs = screen.getAllByRole('textbox');
-    // Index mapping depends on render order, using placeholders is safer
-    fireEvent.change(screen.getByPlaceholderText('e.g., Shell Tanzania'), { target: { value: 'Total Energies' } });
-    fireEvent.change(screen.getByPlaceholderText('contact@supplier.com'), { target: { value: 'info@total.com' } });
-    
-    // Submit
-    const buttons = screen.getAllByRole('button', { name: /Add Supplier/i });
-    const submitBtn = buttons[buttons.length - 1]; // The one in the dialog footer
-    fireEvent.click(submitBtn);
-    
-    await waitFor(() => {
-      expect(FleetFuelApi.fuelSuppliers.register).toHaveBeenCalledWith(expect.objectContaining({
-        supplierName: 'Total Energies',
-        email: 'info@total.com'
-      }));
-    });
-  });
-
   it('opens view profile and shows offers', async () => {
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
 
     // Click on the card to expand it
-    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
     
     // Click View Profile
     const viewBtn = screen.getByText('View Profile & Offers');
@@ -110,17 +94,21 @@ describe('Suppliers Page', () => {
   it('opens edit supplier modal and calls API on submit', async () => {
     FleetFuelApi.fuelSuppliers.updateDetails.mockResolvedValue({});
     
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
     fireEvent.click(screen.getByText('View Profile & Offers'));
 
     await waitFor(() => {
-      expect(screen.getByText('Supplier Profile & Fuel Offers')).toBeInTheDocument();
+      expect(screen.getByText('My Supplier Profile')).toBeInTheDocument();
     });
     
     fireEvent.click(screen.getAllByText('Edit')[0]);
@@ -146,17 +134,21 @@ describe('Suppliers Page', () => {
   it('adds a new fuel offer to a supplier', async () => {
     FleetFuelApi.fuelSuppliers.addOffer.mockResolvedValue({});
 
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
     fireEvent.click(screen.getByText('View Profile & Offers'));
 
     await waitFor(() => {
-      expect(screen.getByText('Supplier Profile & Fuel Offers')).toBeInTheDocument();
+      expect(screen.getByText('My Supplier Profile')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Add Offer'));
@@ -187,13 +179,17 @@ describe('Suppliers Page', () => {
   it('updates an existing fuel offer', async () => {
     FleetFuelApi.fuelSuppliers.updateOffer.mockResolvedValue({});
 
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
     fireEvent.click(screen.getByText('View Profile & Offers'));
 
     await waitFor(() => {
@@ -227,13 +223,17 @@ describe('Suppliers Page', () => {
     // We mock window.confirm to return true
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    render(<Suppliers />);
+    render(
+      <MemoryRouter>
+        <Suppliers user={fuelSupplierUser} />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
-      expect(screen.getByText('Shell Global')).toBeInTheDocument();
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByText('Shell Global'));
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
     fireEvent.click(screen.getByText('View Profile & Offers'));
 
     await waitFor(() => {
@@ -248,5 +248,24 @@ describe('Suppliers Page', () => {
     });
 
     confirmSpy.mockRestore();
+  });
+
+  it('shows Procure Fuel button for fleet_company and navigates to procurement', async () => {
+    render(
+      <MemoryRouter>
+        <Suppliers user={{ role: 'fleet_company' }} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Shell Global').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByText('Shell Global')[0]);
+    
+    const procureBtn = screen.getByText('Procure Fuel');
+    fireEvent.click(procureBtn);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/app/procurement', { state: { prefillSupplierId: 'supp-1' } });
   });
 });

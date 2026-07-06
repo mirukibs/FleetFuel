@@ -3,10 +3,12 @@ import { User } from '../../Domain/entities/User.mjs';
 import { AuthenticationError, ConflictError, ValidationError } from '../../Domain/errors.mjs';
 
 export class AuthenticationApplicationService {
-  constructor({ userRepo, sessionRepo, passwordHasher }) {
+  constructor({ userRepo, sessionRepo, passwordHasher, fleetCompanyRepo, fuelSupplierRepo }) {
     this.userRepo = userRepo;
     this.sessionRepo = sessionRepo;
     this.passwordHasher = passwordHasher;
+    this.fleetCompanyRepo = fleetCompanyRepo;
+    this.fuelSupplierRepo = fuelSupplierRepo;
   }
 
   createUser(input) {
@@ -17,12 +19,28 @@ export class AuthenticationApplicationService {
       throw new ConflictError(`User with email ${email} already exists.`);
     }
 
+    let affiliatedServiceId = null;
+    if (input.role === 'fleet_company') {
+      const companies = this.fleetCompanyRepo?.findAll() || [];
+      if (companies.length === 0) {
+        throw new ConflictError("No fleet company registered. Please register the company first.");
+      }
+      affiliatedServiceId = companies[0].id;
+    } else if (input.role === 'fuel_supplier') {
+      const suppliers = this.fuelSupplierRepo?.findAll() || [];
+      const supplier = suppliers.find(s => s.email.toLowerCase() === email);
+      if (!supplier) {
+        throw new ConflictError("No fuel supplier registered with this email. Please register the supplier profile first.");
+      }
+      affiliatedServiceId = supplier.id;
+    }
+
     const user = new User({
       id: input.id,
       email,
       passwordHash: this.passwordHasher.hash(input.password),
       role: input.role,
-      affiliatedServiceId: input.affiliatedServiceId
+      affiliatedServiceId
     });
 
     this.userRepo.save(user);

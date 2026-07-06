@@ -24,12 +24,17 @@ Package VehicleManagementModule {
             ---
             + createFleet(req: HTTPRequest): HTTPResponse [POST /api/fleets]
             + updateFleetName(id: string, req: HTTPRequest): HTTPResponse [PUT /api/fleets/{id}/name]
+            + getFleet(id: string, req: HTTPRequest): HTTPResponse [GET /api/fleets/{id}]
+            + listFleets(req: HTTPRequest): HTTPResponse [GET /api/fleets]
+            + listFleetVehicles(fleetId: string, req: HTTPRequest): HTTPResponse [GET /api/fleets/{fleetId}/vehicles]
          }
 
          Class FleetManagerController {
             - managerService: FleetManagerApplicationService
             ---
             + createManager(req: HTTPRequest): HTTPResponse [POST /api/managers]
+            + getManager(id: string, req: HTTPRequest): HTTPResponse [GET /api/managers/{id}]
+            + listManagers(req: HTTPRequest): HTTPResponse [GET /api/managers]
          }
 
          Class VehicleController {
@@ -37,17 +42,21 @@ Package VehicleManagementModule {
             ---
             + registerVehicle(req: HTTPRequest): HTTPResponse [POST /api/vehicles]
             + updateVehicle(id: string, req: HTTPRequest): HTTPResponse [PUT /api/vehicles/{id}]
+            + getVehicle(id: string, req: HTTPRequest): HTTPResponse [GET /api/vehicles/{id}]
+            + listVehicles(req: HTTPRequest): HTTPResponse [GET /api/vehicles]
             + assignToFleet(id: string, req: HTTPRequest): HTTPResponse [POST /api/vehicles/{id}/fleet]
+            + removeVehicleFromFleet(id: string, req: HTTPRequest): HTTPResponse [DELETE /api/vehicles/{id}/fleet]
             + mountSensor(id: string, req: HTTPRequest): HTTPResponse [POST /api/vehicles/{id}/sensor]
+            + deleteVehicle(id: string, req: HTTPRequest): HTTPResponse [DELETE /api/vehicles/{id}]
          }
 
          Class TelemetryController {
             - telemetryService: TelemetryApplicationService
             ---
-            ' Endpoint called repeatedly by your Simulation Engine
             + receiveSimulatedReading(req: HTTPRequest): HTTPResponse [POST /api/telemetry/readings]
-            ' Endpoint called by your Frontend Dashboard UI
             + getDashboard(fleetId: string): HTTPResponse [GET /api/fleets/{fleetId}/dashboard]
+            + listVehicleTelemetryReadings(vehicleId: string, req: HTTPRequest): HTTPResponse [GET /api/vehicles/{vehicleId}/telemetry]
+            + listTelemetryReadings(req: HTTPRequest): HTTPResponse [GET /api/telemetry/readings]
          }
       }
    }

@@ -13,8 +13,10 @@ import {
 } from "@/componets/ui/dialog";
 import { cn } from "@/lib/utils";
 import { FleetFuelApi } from "@/lib/client";
+import { useNavigate } from "react-router-dom";
 
-export default function Suppliers() {
+export default function Suppliers({ user }) {
+  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -65,7 +67,17 @@ export default function Suppliers() {
     try {
       setLoading(true);
       const data = await FleetFuelApi.fuelSuppliers.list();
-      setSuppliers(data || []);
+      
+      if (user?.role === "fuel_supplier") {
+        const mySupplier = data.find(s => s.id === user.affiliatedServiceId);
+        setSuppliers(mySupplier ? [mySupplier] : []);
+        if (mySupplier) {
+          setSelectedSupplier(mySupplier);
+          setViewProfileOpen(true);
+        }
+      } else {
+        setSuppliers(data || []);
+      }
     } catch (err) {
       toast.error(err.message || "Failed to load suppliers");
     } finally {
@@ -199,15 +211,12 @@ export default function Suppliers() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Supplier Marketplace"
-        subtitle="Browse and manage commercial fuel supplier storefronts"
+        title={user?.role === "fuel_supplier" ? "My Supplier Profile" : "Supplier Marketplace"}
+        subtitle={user?.role === "fuel_supplier" ? "Manage your profile and fuel offers" : "Browse and manage commercial fuel supplier storefronts"}
         actions={
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setComparePricesOpen(true)}>
               <ArrowRightLeft className="size-4" /> Compare Prices
-            </Button>
-            <Button size="sm" className="gap-2" onClick={() => setAddSupplierOpen(true)}>
-              <Plus className="size-4" /> Add Supplier
             </Button>
           </div>
         }
@@ -251,7 +260,7 @@ export default function Suppliers() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="text-xs w-full"
+                    className="text-xs flex-1"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewProfile(s);
@@ -259,6 +268,18 @@ export default function Suppliers() {
                   >
                     View Profile & Offers
                   </Button>
+                  {user?.role === "fleet_company" && (
+                    <Button 
+                      size="sm" 
+                      className="text-xs flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate("/app/procurement", { state: { prefillSupplierId: s.id } });
+                      }}
+                    >
+                      Procure Fuel
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -337,17 +358,19 @@ export default function Suppliers() {
                   Supplier Profile & Fuel Offers
                 </DialogDescription>
               </div>
-              <Button size="sm" variant="outline" onClick={() => {
-                setEditingSupplier({
-                  supplierName: selectedSupplier.supplierName,
-                  contactPerson: selectedSupplier.contactPerson || "",
-                  email: selectedSupplier.email,
-                  phoneNumber: selectedSupplier.phoneNumber || ""
-                });
-                setEditSupplierOpen(true);
-              }}>
-                Edit
-              </Button>
+              {user?.role === "fuel_supplier" && (
+                <Button size="sm" variant="outline" onClick={() => {
+                  setEditingSupplier({
+                    supplierName: selectedSupplier.supplierName,
+                    contactPerson: selectedSupplier.contactPerson || "",
+                    email: selectedSupplier.email,
+                    phoneNumber: selectedSupplier.phoneNumber || ""
+                  });
+                  setEditSupplierOpen(true);
+                }}>
+                  Edit
+                </Button>
+              )}
             </div>
           </DialogHeader>
           {selectedSupplier && (
@@ -372,9 +395,11 @@ export default function Suppliers() {
               <div className="pt-4 border-t border-border">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-sm">Fuel Offers</h4>
-                  <Button size="sm" variant="outline" onClick={() => setAddOfferOpen(true)} className="h-7 text-xs">
-                    <Plus className="size-3 mr-1" /> Add Offer
-                  </Button>
+                  {user?.role === "fuel_supplier" && (
+                    <Button size="sm" variant="outline" onClick={() => setAddOfferOpen(true)} className="h-7 text-xs">
+                      <Plus className="size-3 mr-1" /> Add Offer
+                    </Button>
+                  )}
                 </div>
                 
                 {selectedSupplier.fuelOffers?.length > 0 ? (
@@ -394,17 +419,19 @@ export default function Suppliers() {
                             <div className="text-lg font-semibold">TZS {offer.pricePerUnit}</div>
                             <div className="text-[10px] text-muted-foreground uppercase">per Litre</div>
                           </div>
-                          <div className="flex flex-col gap-1">
-                            <Button size="sm" variant="outline" onClick={() => {
-                              setEditingOffer({...offer});
-                              setEditOfferOpen(true);
-                            }} className="h-6 px-2 text-[10px]">
-                              Edit
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleRemoveOffer(offer.fuelType)} className="h-6 px-2 text-[10px]">
-                              Remove
-                            </Button>
-                          </div>
+                          {user?.role === "fuel_supplier" && (
+                            <div className="flex flex-col gap-1">
+                              <Button size="sm" variant="outline" onClick={() => {
+                                setEditingOffer({...offer});
+                                setEditOfferOpen(true);
+                              }} className="h-6 px-2 text-[10px]">
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleRemoveOffer(offer.fuelType)} className="h-6 px-2 text-[10px]">
+                                Remove
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

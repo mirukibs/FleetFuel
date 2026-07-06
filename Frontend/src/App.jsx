@@ -14,7 +14,7 @@ import Procurement from "@/pages/Procurement";
 const AUTH_STORAGE_KEY = "fleetfuel.auth";
 
 const roleRoutes = {
-  fleet_company: ["dashboard", "vehicles", "fleet-companies", "procurement"],
+  fleet_company: ["dashboard", "vehicles", "fleet-companies", "procurement", "suppliers"],
   fuel_supplier: ["dashboard", "suppliers", "procurement"],
 };
 
@@ -72,11 +72,11 @@ export default function App() {
           element={
             <AppShell user={session.user} onLogout={handleLogout}>
               <Routes>
-                {allowedRoutes.includes("dashboard") && <Route path="dashboard" element={<Dashboard />} />}
+                {allowedRoutes.includes("dashboard") && <Route path="dashboard" element={<Dashboard user={session.user} />} />}
                 {allowedRoutes.includes("vehicles") && <Route path="vehicles" element={<Fleet />} />}
-                {allowedRoutes.includes("suppliers") && <Route path="suppliers" element={<Suppliers />} />}
-                {allowedRoutes.includes("fleet-companies") && <Route path="fleet-companies" element={<FleetCompanies />} />}
-                {allowedRoutes.includes("procurement") && <Route path="procurement" element={<Procurement />} />}
+                {allowedRoutes.includes("suppliers") && <Route path="suppliers" element={<Suppliers user={session.user} />} />}
+                {allowedRoutes.includes("fleet-companies") && <Route path="fleet-companies" element={<FleetCompanies user={session.user} />} />}
+                {allowedRoutes.includes("procurement") && <Route path="procurement" element={<Procurement user={session.user} />} />}
                 <Route path="*" element={<Navigate to={defaultRoute} replace />} />
               </Routes>
             </AppShell>

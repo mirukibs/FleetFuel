@@ -1,0 +1,26 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title Fuel Transaction Module - Infrastructure Layer
+
+Package FuelTransactionModule {
+    Package Domain {
+        Interface FuelAccountRepository
+    }
+
+    Package Infrastructure {
+        Class InMemoryFuelAccountRepository {
+            - db: inMemoryDatabase
+            + save(account: FuelAccount): void
+            + findByFleetCompanyId(fleetCompanyId: string): FuelAccount
+        }
+
+        Class inMemoryDatabase <<Database>> {
+            + collections: Object
+        }
+    }
+
+    InMemoryFuelAccountRepository ..|> FuelAccountRepository
+    InMemoryFuelAccountRepository --> inMemoryDatabase : Reads/Writes Fuel Accounts and Transactions
+}
+@enduml

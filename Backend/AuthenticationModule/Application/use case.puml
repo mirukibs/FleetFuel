@@ -1,0 +1,32 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+title FleetFuel Authentication Module - Use Cases
+
+actor "Unauthenticated User" as Guest
+actor "Authenticated User" as User
+actor "Fleet Company" as FC
+actor "Fuel Supplier" as FS
+
+rectangle "Authentication System" {
+  usecase "Register/Create User" as UC1
+  usecase "Login" as UC2
+  usecase "Get Session" as UC3
+  usecase "Logout" as UC4
+  
+  usecase "Auto-map Affiliated Service" as UC1_1
+}
+
+Guest --> UC1
+Guest --> UC2
+
+User --> UC3
+User --> UC4
+
+FC --|> Guest
+FS --|> Guest
+FC --|> User
+FS --|> User
+
+UC1 ..> UC1_1 : <<includes>>
+@enduml

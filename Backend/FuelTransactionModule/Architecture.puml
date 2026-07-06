@@ -1,0 +1,30 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Transaction Module Architecture
+
+Package FuelTransactionModule {
+    Package Domain {
+        Class FuelAccount <<AggregateRoot>>
+        Class FuelTransaction <<ValueObject>>
+    }
+
+    Package Application {
+        Class FuelTransactionApplicationService
+    }
+    Package Infrastructure {
+        Class InMemoryFuelAccountRepository
+        Class inMemoryDatabase
+    }
+
+    Package Presentation {
+        Class FuelTransactionController
+    }
+}
+
+FuelTransactionApplicationService --> FuelAccount
+InMemoryFuelAccountRepository --> inMemoryDatabase
+FuelTransactionController --> FuelTransactionApplicationService
+Application --> Infrastructure
+
+@enduml

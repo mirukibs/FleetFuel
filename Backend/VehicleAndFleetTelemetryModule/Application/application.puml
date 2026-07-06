@@ -80,12 +80,19 @@ Package VehicleManagementModule {
                 - managerRepo: FleetManagerRepository
                 ---
                 + createManager(input: CreateFleetManagerInput): void
+                + listManagers(): List<FleetManagerDTO>
+                + listManagersByCompany(fleetCompanyId: string): List<FleetManagerDTO>
+                + getManager(id: string): FleetManagerDTO
             }
             
             Class FleetApplicationService {
                 - fleetRepo: FleetRepository
+                - managerRepo: FleetManagerRepository
                 ---
                 + createFleet(input: CreateFleetInput): void
+                + listFleets(): List<FleetDTO>
+                + listFleetsByCompany(fleetCompanyId: string): List<FleetDTO>
+                + getFleet(id: string): FleetDTO
                 + updateFleetName(id: string, newName: string): void
             }
 
@@ -94,20 +101,24 @@ Package VehicleManagementModule {
                 - fleetRepo: FleetRepository
                 ---
                 + registerVehicle(input: RegisterVehicleInput): void
+                + listVehicles(): List<VehicleDTO>
+                + listVehiclesByFleet(fleetId: string): List<VehicleDTO>
+                + getVehicle(id: string): VehicleDTO
                 + updateVehicleDetails(id: string, input: UpdateVehicleInput): void
                 + assignVehicleToFleet(vehicleId: string, fleetId: string): void
                 + removeVehicleFromFleet(vehicleId: string): void
+                + deleteVehicle(vehicleId: string): Object
                 + assignFuelSensor(vehicleId: string, sensorId: string, serialNo: string): void
-                + viewVehicleDetails(id: string): ViewVehicleDetailsDTO
             }
 
             Class TelemetryApplicationService {
                 - vehicleRepo: VehicleRepository
+                - fleetRepo: FleetRepository
                 ---
-                ' Driven by the Simulation Engine Actor
                 + generateSimulatedFuelReading(input: RecordReadingInput): void
-                ' Driven by the Fleet Manager Actor
-                + viewFleetFuelEfficiencyDashboard(fleetId: string): List<VehicleFuelStatusDTO>
+                + viewFleetFuelEfficiencyDashboard(fleetId: string): Object
+                + listVehicleTelemetryReadings(vehicleId: string): List<Object>
+                + listTelemetryReadings(input: Object): List<Object>
             }
         }
 

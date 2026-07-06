@@ -1,0 +1,53 @@
+@startuml
+skinparam componentStyle uml2
+skinparam handwritten false
+skinparam titleFontSize 20
+skinparam defaultFontName Arial
+
+title FleetFuel High-Level Component Architecture
+
+actor "Fleet Manager" as FleetManager
+actor "Fuel Supplier" as FuelSupplier
+
+node "Client Browser" {
+    component "Frontend SPA\n(React + Vite)" as Frontend
+}
+
+node "Backend System\n(Node.js Modular Monolith)" {
+    
+    component "Authentication\nModule" as AuthModule
+    component "Vehicle & Fleet\nTelemetry Module" as TelemetryModule
+    component "Fuel Procurement\nModule" as ProcurementModule
+    component "Fuel Transaction\nModule" as TransactionModule
+    
+    database "In-Memory\nDatabase" as InMemoryDB
+}
+
+node "External Simulators" {
+    component "Telemetry\nSimulation Engine" as SimulationEngine
+}
+
+' User interactions
+FleetManager --> Frontend : Views telemetry, requests fuel
+FuelSupplier --> Frontend : Manages offers, approves requests
+
+' Frontend to Backend API calls
+Frontend -down-> AuthModule : REST API (/auth)
+Frontend -down-> TelemetryModule : REST API (/telemetry, /fleet)
+Frontend -down-> ProcurementModule : REST API (/procurement)
+Frontend -down-> TransactionModule : REST API (/transactions)
+
+' Backend modules to Database
+AuthModule -down-> InMemoryDB : Users, Sessions
+TelemetryModule -down-> InMemoryDB : Fleets, Vehicles, Sensors
+ProcurementModule -down-> InMemoryDB : Suppliers, Offers, Requests
+TransactionModule -down-> InMemoryDB : Fuel Accounts, Ledger
+
+' External Simulators to Backend
+SimulationEngine -right-> TelemetryModule : POST Simulated Fuel Readings
+
+' Cross-Module interactions (Application Layer Coordination)
+ProcurementModule .left.> TransactionModule : Triggers Deposit on Fulfillment
+TelemetryModule .right.> TransactionModule : Triggers Withdrawal on Refuel
+
+@enduml

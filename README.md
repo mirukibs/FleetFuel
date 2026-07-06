@@ -1,65 +1,49 @@
 # FleetFuel
 
-FleetFuel is a split workspace with a backend API and a Vite frontend. The frontend now consumes the backend telemetry and fleet endpoints directly instead of relying on static demo state.
+FleetFuel is a comprehensive logistics and supply chain solution designed to address the difficulties logistics companies face in monitoring their vehicles' fuel consumption in real time and procuring fuel efficiently.
 
-## Repo Layout
+By simulating live fuel sensor telemetry and offering a dedicated marketplace for fuel procurement, FleetFuel bridges the gap between fleet management, real-time vehicle monitoring, and fuel supply chains.
 
-- `Backend/` - BFast function server for the Vehicle and Fleet Telemetry module
-- `Frontend/` - React + Vite application
-- `Docs/` - supporting documentation
+## Project Structure
 
-## Quick Start
+This repository is split into two primary components:
 
-Run the backend first, then the frontend.
+### 1. Backend (`/Backend`)
+The backend is a Node.js-based modular monolith following Domain-Driven Design (DDD) principles. It is broken down into specific business domains, each with its own isolated bounded context:
+- **AuthenticationModule**: User identity and role mapping.
+- **FuelProcurementModule**: The marketplace connecting Fleet Companies to Fuel Suppliers.
+- **FuelTransactionModule**: The financial ledger tracking abstract fuel balances.
+- **VehicleAndFleetTelemetryModule**: Real-time vehicle monitoring and fleet organization.
 
-### 1. Backend
+For detailed backend setup instructions, architecture documentation, and how to run tests, see the [Backend README](./Backend/README.md).
 
-```bash
-cd Backend
-npm ci
-npm run start:dev
-```
+### 2. Frontend (`/Frontend`)
+The frontend is a web application built to consume the backend APIs and present dedicated user interfaces based on the logged-in user's role (e.g., a dashboard for Fleet Companies to monitor vehicles and procure fuel, and a dashboard for Fuel Suppliers to manage their offers).
 
-The backend listens on port `3003` by default.
+## Getting Started
 
-### 2. Frontend
+To run the full stack locally:
 
-```bash
-cd Frontend
-npm install
-npm run dev
-```
+1. **Start the Backend:**
+   Navigate to the `Backend` directory, install dependencies, and run the server.
+   ```bash
+   cd Backend
+   npm install
+   npm run start
+   ```
 
-The frontend defaults to `http://localhost:3003` for API requests. If your backend runs elsewhere, set `VITE_API_URL` before starting the frontend.
+2. **Start the Frontend:**
+   Navigate to the `Frontend` directory, install dependencies, and start the development server. (Please consult the frontend-specific documentation for detailed commands).
 
-## Useful Commands
+## Core Features
 
-Backend:
+- **Single-Tenant Architecture**: Users (whether a fleet company or fuel supplier) operate strictly within their own contextual sandbox.
+- **Simulated Real-Time Telemetry**: Connects "dummy" fuel sensors to vehicles and streams telemetry to monitor fuel levels in real time.
+- **Automated Fuel Marketplace**: Fleet companies can view available suppliers, compare fuel prices, and submit procurement requests.
+- **Immutable Transaction Ledger**: Every drop of fuel deposited (procured) or withdrawn (consumed) is tracked immutably in the transaction ledger.
 
-```bash
-cd Backend
-npm test
-```
+## Architecture
 
-Frontend:
+The system utilizes a modular monolith approach on the backend. This choice was made to ensure low coupling (via strict layer isolation: Domain, Application, Infrastructure, Presentation) while maintaining the simplicity of a single deployment unit. 
 
-```bash
-cd Frontend
-npm run build
-npm run preview
-```
-
-## Backend API Surface
-
-The backend currently exposes endpoints for:
-
-- creating managers and fleets
-- registering, updating, assigning, and deleting vehicles
-- assigning fuel sensors
-- submitting simulated telemetry readings
-- fetching a fleet dashboard snapshot
-
-## Notes
-
-- The frontend uses `Frontend/src/lib/client.js` as the API client.
-- The frontend build and backend tests are the fastest way to verify the workspace after changes.
+![alt text](HighLevelArchitecture.png)
