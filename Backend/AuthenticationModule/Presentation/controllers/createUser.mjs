@@ -9,8 +9,7 @@ export const createUser = endpoint({
   requestSample: {
     email: 'buyer@example.com',
     password: 'secret-123',
-    role: 'fleet_company',
-    affiliatedServiceId: 'fc-001'
+    role: 'fleet_company'
   },
   responseSample: {
     id: 'user-001',

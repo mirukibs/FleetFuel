@@ -106,59 +106,60 @@ Package FuelProcurementModule {
         Package Services {
 
             Class FleetCompanyApplicationService {
-                - companyRepo: FleetCompanyRepository
-                - supplierRepo: FuelSupplierRepository
+                - fleetCompanyRepo: FleetCompanyRepository
                 --
-                + registerCompany(input: RegisterFleetCompanyInput): void
-                + updateCompany(id: string, input: UpdateFleetCompanyInput): void
-                + viewFuelSuppliers(): List<FuelSupplierListingDTO>
-                + viewSupplierFuelOffers(supplierId: string): List<FuelOfferDTO>
-                + compareFuelPrices(fuelType: FuelType): List<FuelOfferDTO>
+                + registerFleetCompany(input: RegisterFleetCompanyInput): void
+                + updateCompanyDetails(id: string, input: UpdateFleetCompanyInput): void
+                + getFleetCompany(id: string): FleetCompanyDTO
+                + listFleetCompanies(): List<FleetCompanyDTO>
             }
 
             Class FuelSupplierApplicationService {
-                - supplierRepo: FuelSupplierRepository
+                - fuelSupplierRepo: FuelSupplierRepository
                 --
-                + registerSupplier(input: RegisterFuelSupplierInput): void
-                + updateSupplier(id: string, input: UpdateFuelSupplierInput): void
+                + registerFuelSupplier(input: RegisterFuelSupplierInput): void
+                + updateSupplierDetails(id: string, input: UpdateFuelSupplierInput): void
                 + addFuelOffer(supplierId: string, input: AddFuelOfferInput): void
                 + updateFuelOffer(supplierId: string, input: UpdateFuelOfferInput): void
                 + removeFuelOffer(supplierId: string, fuelType: FuelType): void
+                + listFuelSuppliers(): List<FuelSupplierListingDTO>
+                + getSupplierFuelOffers(supplierId: string): List<FuelOfferDTO>
+                + compareFuelPrices(fuelType: FuelType): List<FuelOfferDTO>
             }
 
             Class ProcurementApplicationService {
-                - requestRepo: ProcurementRequestRepository
-                - companyRepo: FleetCompanyRepository
-                - supplierRepo: FuelSupplierRepository
+                - procurementRepo: ProcurementRequestRepository
+                - fleetCompanyRepo: FleetCompanyRepository
+                - fuelSupplierRepo: FuelSupplierRepository
                 --
-                + createRequest(input: CreateProcurementRequestInput): void
-                + updateRequest(id: string, input: UpdateProcurementRequestInput): void
-                + submitRequest(id: string): void
-                + viewRequestStatus(id: string): ProcurementRequestStatusDTO
-                + viewProcurementRequests(): List<ProcurementRequestDTO>
-                + acceptRequest(id: string): void
-                + rejectRequest(id: string): void
-                + fulfillRequest(id: string): void
+                + createProcurementRequest(input: CreateProcurementRequestInput): void
+                + updateProcurementRequest(id: string, input: UpdateProcurementRequestInput): void
+                + submitProcurementRequest(id: string): void
+                + getProcurementRequest(id: string): ProcurementRequestDTO
+                + listRequestsByFleetCompany(fleetCompanyId: string): List<ProcurementRequestDTO>
+                + listRequestsBySupplier(supplierId: string): List<ProcurementRequestDTO>
+                + acceptProcurementRequest(id: string): void
+                + rejectProcurementRequest(id: string): void
+                + fulfillProcurementRequest(id: string): void
             }
         }
 
         FleetCompanyApplicationService ..> RegisterFleetCompanyInput
         FleetCompanyApplicationService ..> UpdateFleetCompanyInput
-        FleetCompanyApplicationService ..> FuelSupplierListingDTO
-        FleetCompanyApplicationService ..> FuelOfferDTO
 
         FuelSupplierApplicationService ..> RegisterFuelSupplierInput
         FuelSupplierApplicationService ..> UpdateFuelSupplierInput
         FuelSupplierApplicationService ..> AddFuelOfferInput
         FuelSupplierApplicationService ..> UpdateFuelOfferInput
+        FuelSupplierApplicationService ..> FuelSupplierListingDTO
+        FuelSupplierApplicationService ..> FuelOfferDTO
 
         ProcurementApplicationService ..> CreateProcurementRequestInput
         ProcurementApplicationService ..> UpdateProcurementRequestInput
-        ProcurementApplicationService ..> ProcurementRequestStatusDTO
+        ProcurementApplicationService ..> ProcurementRequestDTO
     }
 
     FleetCompanyApplicationService -up-> FleetCompanyRepository
-    FleetCompanyApplicationService -up-> FuelSupplierRepository
 
     FuelSupplierApplicationService -up-> FuelSupplierRepository
 

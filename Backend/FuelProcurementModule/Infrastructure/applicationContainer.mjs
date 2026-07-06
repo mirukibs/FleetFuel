@@ -10,6 +10,12 @@ const fleetCompanyRepo = new InMemoryFleetCompanyRepository();
 const fuelSupplierRepo = new InMemoryFuelSupplierRepository();
 const procurementRepo = new InMemoryProcurementRequestRepository();
 
+export const repos = {
+  fleetCompanyRepo,
+  fuelSupplierRepo,
+  procurementRepo
+};
+
 export const services = {
   fleetCompany: new FleetCompanyApplicationService({ fleetCompanyRepo }),
   fuelSupplier: new FuelSupplierApplicationService({ fuelSupplierRepo }),

@@ -1,12 +1,66 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Fuel, Truck, AlertTriangle, TrendingDown, Activity, Zap } from "lucide-react";
+import { Fuel, Truck, AlertTriangle, TrendingDown, Activity, Zap, Store, ShoppingCart, CheckCircle, Clock } from "lucide-react";
 import { KpiCard } from "@/componets/ui-kit/KpiCard";
 import { PageHeader, Card, CardHeader } from "@/componets/ui-kit/Section";
 import { Button } from "@/componets/ui/button";
 import { cn } from "@/lib/utils";
 import { FleetFuelApi } from "@/lib/client";
 
-export default function Dashboard() {
+function FuelSupplierDashboard({ user }) {
+  const [stats, setStats] = useState({ offers: 0, pending: 0, fulfilled: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const suppliers = await FleetFuelApi.fuelSuppliers.list();
+        const me = suppliers.find(s => s.id === user.affiliatedServiceId);
+        
+        const requests = await FleetFuelApi.procurement.listBySupplier(user.affiliatedServiceId);
+        
+        setStats({
+          offers: me?.fuelOffers?.length || 0,
+          pending: requests?.filter(r => r.procurementStatus === 'SUBMITTED' || r.procurementStatus === 'ACCEPTED').length || 0,
+          fulfilled: requests?.filter(r => r.procurementStatus === 'FULFILLED').length || 0,
+          total: requests?.length || 0
+        });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user?.affiliatedServiceId) {
+      loadStats();
+    }
+  }, [user]);
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Supplier Dashboard"
+        subtitle="Overview of your fuel supply operations"
+      />
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard label="Active Fuel Offers" value={loading ? "..." : stats.offers} delta={0} icon={Store} accent="primary" hint="In your marketplace profile" />
+        <KpiCard label="Pending Orders" value={loading ? "..." : stats.pending} delta={0} icon={Clock} accent="warning" hint="Awaiting your action" />
+        <KpiCard label="Fulfilled Orders" value={loading ? "..." : stats.fulfilled} delta={0} icon={CheckCircle} accent="success" hint="Successfully delivered" />
+        <KpiCard label="Total Requests" value={loading ? "..." : stats.total} delta={0} icon={ShoppingCart} accent="accent" hint="All-time requests" />
+      </div>
+
+      <div className="p-8 text-center bg-card rounded-xl border border-border shadow-sm mt-8">
+        <Store className="size-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+        <h3 className="text-lg font-semibold mb-2">Welcome to your Supplier Dashboard</h3>
+        <p className="text-muted-foreground text-sm max-w-md mx-auto">
+          Use the navigation menu to manage your fuel offers under <strong>My Supplier Profile</strong> or process incoming orders in <strong>Procurement</strong>.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function Dashboard({ user }) {
   const [fleets, setFleets] = useState([]);
   const [fleetId, setFleetId] = useState("");
   const [dashboard, setDashboard] = useState({
@@ -17,6 +71,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [simulating, setSimulating] = useState(false);
+
+  if (user?.role === "fuel_supplier") {
+    return <FuelSupplierDashboard user={user} />;
+  }
 
   useEffect(() => {
     let active = true;

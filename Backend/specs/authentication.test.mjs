@@ -5,6 +5,7 @@ import { login } from '../AuthenticationModule/Presentation/controllers/login.mj
 import { logout } from '../AuthenticationModule/Presentation/controllers/logout.mjs';
 import { getSession } from '../AuthenticationModule/Presentation/controllers/getSession.mjs';
 import { resetInMemoryDatabase } from '../AuthenticationModule/Infrastructure/database/inMemoryDatabase.mjs';
+import { repos as fpRepos } from '../FuelProcurementModule/Infrastructure/applicationContainer.mjs';
 
 const createResponse = () => {
   const response = {
@@ -31,12 +32,16 @@ const invoke = async (endpoint, { body = {}, headers = {} } = {}) => {
 test('users can be created, log in, read their role session, and log out', async () => {
   resetInMemoryDatabase();
 
+  fpRepos.fleetCompanyRepo.save({
+    id: 'fc-001',
+    companyName: 'Test Company'
+  });
+
   const created = await invoke(createUser, {
     body: {
       email: 'buyer@example.com',
       password: 'secret-123',
-      role: 'fleet_company',
-      affiliatedServiceId: 'fc-001'
+      role: 'fleet_company'
     }
   });
 
@@ -89,12 +94,17 @@ test('users can be created, log in, read their role session, and log out', async
 test('authentication rejects duplicate emails, invalid roles, and bad credentials', async () => {
   resetInMemoryDatabase();
 
+  fpRepos.fuelSupplierRepo.save({
+    id: 'supplier-001',
+    supplierName: 'Test Supplier',
+    email: 'supplier@example.com'
+  });
+
   const supplier = await invoke(createUser, {
     body: {
       email: 'supplier@example.com',
       password: 'secret-123',
-      role: 'fuel_supplier',
-      affiliatedServiceId: 'supplier-001'
+      role: 'fuel_supplier'
     }
   });
   assert.equal(supplier.statusCode, 201);
@@ -103,8 +113,7 @@ test('authentication rejects duplicate emails, invalid roles, and bad credential
     body: {
       email: 'supplier@example.com',
       password: 'secret-123',
-      role: 'fuel_supplier',
-      affiliatedServiceId: 'supplier-002'
+      role: 'fuel_supplier'
     }
   });
   assert.equal(duplicate.statusCode, 409);
@@ -114,8 +123,7 @@ test('authentication rejects duplicate emails, invalid roles, and bad credential
     body: {
       email: 'admin@example.com',
       password: 'secret-123',
-      role: 'admin',
-      affiliatedServiceId: 'admin-001'
+      role: 'admin'
     }
   });
   assert.equal(invalidRole.statusCode, 400);

@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["fleet_company", "fuel_supplier"] },
   { to: "/app/vehicles", label: "Fleet", icon: Truck, roles: ["fleet_company"] },
-  { to: "/app/suppliers", label: "Suppliers", icon: Store, roles: ["fuel_supplier"] },
-  { to: "/app/fleet-companies", label: "Fleet Companies", icon: Building2, roles: ["fleet_company"] },
+  { to: "/app/suppliers", label: "Suppliers", icon: Store, roles: ["fleet_company", "fuel_supplier"] },
+  { to: "/app/fleet-companies", label: "Company Profile", icon: Building2, roles: ["fleet_company"] },
   { to: "/app/procurement", label: "Procurement", icon: ClipboardList, roles: ["fleet_company", "fuel_supplier"] },
 ];
 

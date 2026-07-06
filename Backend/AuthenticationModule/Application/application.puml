@@ -1,0 +1,41 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Authentication Module - Application Layer
+
+Package AuthenticationManagement {
+   Package Application {
+      Package Services {
+         Class AuthenticationApplicationService {
+            - userRepo: UserRepository
+            - sessionRepo: SessionRepository
+            - passwordHasher: PasswordHasher
+            - fleetCompanyRepo: FleetCompanyRepository
+            - fuelSupplierRepo: FuelSupplierRepository
+            ---
+            + createUser(input: Object): Object
+            + login(input: Object): Object
+            + getSession(token: string): Object
+            + logout(token: string): Object
+         }
+      }
+   }
+
+   Package Infrastructure {
+      Interface PasswordHasher {
+         + hash(password: string): string
+         + verify(password: string, hash: string): boolean
+      }
+      
+      Class InMemoryUserRepository implements UserRepository
+      Class InMemorySessionRepository implements SessionRepository
+   }
+}
+
+AuthenticationApplicationService ..> UserRepository : uses >
+AuthenticationApplicationService ..> SessionRepository : uses >
+AuthenticationApplicationService ..> PasswordHasher : uses >
+AuthenticationApplicationService ..> FleetCompanyRepository : uses (for auto-mapping) >
+AuthenticationApplicationService ..> FuelSupplierRepository : uses (for auto-mapping) >
+
+@enduml

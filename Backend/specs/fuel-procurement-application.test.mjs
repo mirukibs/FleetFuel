@@ -91,6 +91,16 @@ test("FuelProcurement Application Layer", async (t) => {
 
     const list = fleetAppService.listFleetCompanies();
     assert.strictEqual(list.length, 1);
+
+    assert.throws(() => {
+      fleetAppService.registerFleetCompany({
+        id: "fc-2",
+        companyName: "Duplicate",
+        contactPerson: "Dup",
+        email: "dup@acme.com",
+        phoneNumber: "000-000"
+      });
+    }, /A fleet company is already registered on this instance/);
   });
 
   await t.test("FuelSupplierApplicationService registers suppliers and manages offers", () => {
@@ -101,6 +111,16 @@ test("FuelProcurement Application Layer", async (t) => {
       email: "alice@globalfuels.com",
       phoneNumber: "555-1234"
     });
+
+    assert.throws(() => {
+      supplierAppService.registerFuelSupplier({
+        id: "fs-1-dup",
+        supplierName: "Global Fuels Dup",
+        contactPerson: "Alice 2",
+        email: "alice@globalfuels.com",
+        phoneNumber: "555-0000"
+      });
+    }, /A supplier with this email is already registered/);
 
     supplierAppService.addFuelOffer("fs-1", {
       fuelType: FuelType.DIESEL,

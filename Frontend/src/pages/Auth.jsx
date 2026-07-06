@@ -11,7 +11,9 @@ const emptyRegistration = {
   email: "",
   password: "",
   role: "fleet_company",
-  affiliatedServiceId: "",
+  name: "",
+  contactPerson: "",
+  phone: ""
 };
 
 export default function Auth({ onAuthenticated }) {
@@ -45,8 +47,29 @@ export default function Auth({ onAuthenticated }) {
     setRegistrationSuccess("");
 
     try {
-      await FleetFuelApi.auth.createUser(registrationForm);
-      setRegistrationSuccess("User created. They can now sign in.");
+      if (registrationForm.role === "fleet_company") {
+        await FleetFuelApi.fleetCompanies.register({
+          companyName: registrationForm.name,
+          contactPerson: registrationForm.contactPerson,
+          email: registrationForm.email,
+          phoneNumber: registrationForm.phone
+        });
+      } else {
+        await FleetFuelApi.fuelSuppliers.register({
+          supplierName: registrationForm.name,
+          contactPerson: registrationForm.contactPerson,
+          email: registrationForm.email,
+          phoneNumber: registrationForm.phone
+        });
+      }
+
+      await FleetFuelApi.auth.createUser({
+        email: registrationForm.email,
+        password: registrationForm.password,
+        role: registrationForm.role
+      });
+
+      setRegistrationSuccess("Account and Workspace created! You can now sign in.");
       setRegistrationForm(emptyRegistration);
     } catch (error) {
       setRegistrationError(error.message);
@@ -70,12 +93,15 @@ export default function Auth({ onAuthenticated }) {
 
         <div className="mt-auto max-w-md py-12">
           <h1 className="font-display text-4xl font-semibold leading-tight">FleetFuel</h1>
+          <p className="mt-4 text-sidebar-foreground/80 leading-relaxed">
+            Welcome to the centralized hub for fuel procurement and telemetry. Sign in or register your company to get started.
+          </p>
         </div>
       </section>
 
       <section className="px-4 py-6 sm:px-8 lg:px-12 flex items-center">
         <div className="w-full max-w-5xl grid gap-6 xl:grid-cols-2">
-          <form onSubmit={handleLogin} className="rounded-lg border border-border bg-card p-6 shadow-card">
+          <form onSubmit={handleLogin} className="rounded-lg border border-border bg-card p-6 shadow-card h-fit">
             <div className="flex items-center gap-3">
               <LogIn className="size-5 text-primary" />
               <h2 className="font-display text-2xl font-semibold">Sign in</h2>
@@ -120,34 +146,12 @@ export default function Auth({ onAuthenticated }) {
           <form onSubmit={handleCreateUser} className="rounded-lg border border-border bg-card p-6 shadow-card">
             <div className="flex items-center gap-3">
               <UserPlus className="size-5 text-primary" />
-              <h2 className="font-display text-2xl font-semibold">Create user</h2>
+              <h2 className="font-display text-2xl font-semibold">Setup Workspace</h2>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-medium sm:col-span-2">
-                User email
-                <input
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
-                  type="email"
-                  value={registrationForm.email}
-                  onChange={(event) => setRegistrationForm({ ...registrationForm, email: event.target.value })}
-                  required
-                />
-              </label>
-
-              <label className="block text-sm font-medium">
-                User password
-                <input
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
-                  type="password"
-                  value={registrationForm.password}
-                  onChange={(event) => setRegistrationForm({ ...registrationForm, password: event.target.value })}
-                  required
-                />
-              </label>
-
-              <label className="block text-sm font-medium">
-                Role
+                Account Type
                 <select
                   className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
                   value={registrationForm.role}
@@ -159,12 +163,67 @@ export default function Auth({ onAuthenticated }) {
                 </select>
               </label>
 
+              <div className="sm:col-span-2 mt-2 mb-1 border-b border-border pb-2">
+                <h3 className="text-sm font-semibold text-foreground/80">
+                  {registrationForm.role === "fleet_company" ? "Company Details" : "Supplier Details"}
+                </h3>
+              </div>
+
               <label className="block text-sm font-medium sm:col-span-2">
-                Affiliated service ID
+                {registrationForm.role === "fleet_company" ? "Company Name" : "Supplier Name"}
                 <input
                   className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
-                  value={registrationForm.affiliatedServiceId}
-                  onChange={(event) => setRegistrationForm({ ...registrationForm, affiliatedServiceId: event.target.value })}
+                  type="text"
+                  value={registrationForm.name}
+                  onChange={(event) => setRegistrationForm({ ...registrationForm, name: event.target.value })}
+                  required
+                />
+              </label>
+
+              <label className="block text-sm font-medium">
+                Contact Person
+                <input
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
+                  type="text"
+                  value={registrationForm.contactPerson}
+                  onChange={(event) => setRegistrationForm({ ...registrationForm, contactPerson: event.target.value })}
+                  required
+                />
+              </label>
+
+              <label className="block text-sm font-medium">
+                Phone Number
+                <input
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
+                  type="tel"
+                  value={registrationForm.phone}
+                  onChange={(event) => setRegistrationForm({ ...registrationForm, phone: event.target.value })}
+                  required
+                />
+              </label>
+
+              <div className="sm:col-span-2 mt-2 mb-1 border-b border-border pb-2">
+                <h3 className="text-sm font-semibold text-foreground/80">User Credentials</h3>
+              </div>
+
+              <label className="block text-sm font-medium sm:col-span-2">
+                Email
+                <input
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
+                  type="email"
+                  value={registrationForm.email}
+                  onChange={(event) => setRegistrationForm({ ...registrationForm, email: event.target.value })}
+                  required
+                />
+              </label>
+
+              <label className="block text-sm font-medium sm:col-span-2">
+                Password
+                <input
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-ring"
+                  type="password"
+                  value={registrationForm.password}
+                  onChange={(event) => setRegistrationForm({ ...registrationForm, password: event.target.value })}
                   required
                 />
               </label>
@@ -179,7 +238,7 @@ export default function Auth({ onAuthenticated }) {
               disabled={isCreatingUser}
             >
               <UserPlus className="size-4" />
-              {isCreatingUser ? "Creating user" : "Create user"}
+              {isCreatingUser ? "Creating workspace..." : "Create Workspace"}
             </button>
           </form>
         </div>

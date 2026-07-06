@@ -8,6 +8,16 @@ vi.mock('@/lib/client', () => ({
     auth: {
       login: vi.fn(),
       logout: vi.fn()
+    },
+    fleetCompanies: {
+      list: vi.fn().mockResolvedValue([])
+    },
+    fuelSuppliers: {
+      list: vi.fn().mockResolvedValue([])
+    },
+    procurement: {
+      listByCompany: vi.fn().mockResolvedValue([]),
+      listBySupplier: vi.fn().mockResolvedValue([])
     }
   }
 }));
@@ -38,10 +48,10 @@ describe('App authentication', () => {
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText('Email'), {
+    fireEvent.change(screen.getAllByLabelText('Email')[0], {
       target: { value: 'buyer@example.com' }
     });
-    fireEvent.change(screen.getByLabelText('Password'), {
+    fireEvent.change(screen.getAllByLabelText('Password')[0], {
       target: { value: 'secret-123' }
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
@@ -51,9 +61,9 @@ describe('App authentication', () => {
     });
 
     expect(screen.getByText('Fleet')).toBeInTheDocument();
-    expect(screen.getByText('Fleet Companies')).toBeInTheDocument();
-    expect(screen.getByText('Procurement')).toBeInTheDocument();
-    expect(screen.queryByText('Suppliers')).not.toBeInTheDocument();
+    expect(screen.getByText('Company Profile')).toBeInTheDocument();
+    expect(screen.getAllByText('Procurement').length).toBeGreaterThan(0);
+    expect(screen.getByText('Suppliers')).toBeInTheDocument();
     expect(localStorage.getItem('fleetfuel.auth')).toContain('buyer@example.com');
   });
 
@@ -69,21 +79,21 @@ describe('App authentication', () => {
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText('Email'), {
+    fireEvent.change(screen.getAllByLabelText('Email')[0], {
       target: { value: 'supplier@example.com' }
     });
-    fireEvent.change(screen.getByLabelText('Password'), {
+    fireEvent.change(screen.getAllByLabelText('Password')[0], {
       target: { value: 'secret-123' }
     });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Supplier Dashboard' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Suppliers')).toBeInTheDocument();
-    expect(screen.getByText('Procurement')).toBeInTheDocument();
-    expect(screen.queryByText('Fleet Companies')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Procurement').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Company Profile')).not.toBeInTheDocument();
     expect(screen.queryByText('Fleet')).not.toBeInTheDocument();
   });
 });

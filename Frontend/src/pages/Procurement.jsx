@@ -13,17 +13,20 @@ import {
 } from "@/componets/ui/dialog";
 import { cn } from "@/lib/utils";
 import { FleetFuelApi } from "@/lib/client";
+import { useLocation } from "react-router-dom";
 
-export default function Procurement() {
+export default function Procurement({ user }) {
+  const location = useLocation();
   
   // Data State
   const [companies, setCompanies] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [requests, setRequests] = useState([]);
   
-  const [viewRole, setViewRole] = useState("FLEET_COMPANY"); // "FLEET_COMPANY" | "FUEL_SUPPLIER"
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const [selectedSupplierId, setSelectedSupplierId] = useState("");
+  const viewRole = user?.role === "fuel_supplier" ? "FUEL_SUPPLIER" : "FLEET_COMPANY";
+  const selectedCompanyId = viewRole === "FLEET_COMPANY" ? user?.affiliatedServiceId : "";
+  const selectedSupplierId = viewRole === "FUEL_SUPPLIER" ? user?.affiliatedServiceId : "";
+
   const [loading, setLoading] = useState(false);
 
   const [newRequestOpen, setNewRequestOpen] = useState(false);
@@ -42,7 +45,25 @@ export default function Procurement() {
 
   // Load Initial Data
   useEffect(() => {
-    loadBaseData();
+    loadBaseData().then(({ supps }) => {
+      if (location.state?.prefillSupplierId && viewRole === "FLEET_COMPANY") {
+        const supplierId = location.state.prefillSupplierId;
+        const supplier = supps?.find(s => s.id === supplierId);
+        let price = "";
+        if (supplier && supplier.fuelOffers) {
+          const offer = supplier.fuelOffers.find(o => o.fuelType === "DIESEL");
+          if (offer) price = offer.pricePerUnit;
+        }
+        setNewRequest(prev => ({
+          ...prev,
+          fuelSupplierId: supplierId,
+          unitPrice: price
+        }));
+        setNewRequestOpen(true);
+        // Clear state so it doesn't reopen on refresh
+        window.history.replaceState({}, document.title);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -69,14 +90,10 @@ export default function Procurement() {
       ]);
       setCompanies(comps || []);
       setSuppliers(supps || []);
-      if (comps?.length > 0 && !selectedCompanyId) {
-        setSelectedCompanyId(comps[0].id);
-      }
-      if (supps?.length > 0 && !selectedSupplierId) {
-        setSelectedSupplierId(supps[0].id);
-      }
+      return { comps: comps || [], supps: supps || [] };
     } catch (err) {
       toast.error("Failed to load initial data");
+      return { comps: [], supps: [] };
     }
   };
 
@@ -210,39 +227,13 @@ export default function Procurement() {
         subtitle="Manage procurement requests"
       />
 
-      <div className="flex gap-2 border-b border-border pb-4">
-        <Button 
-          variant={viewRole === "FLEET_COMPANY" ? "default" : "ghost"} 
-          onClick={() => setViewRole("FLEET_COMPANY")}
-          className="gap-2"
-        >
-          <Building2 className="size-4" /> View as Fleet Company
-        </Button>
-        <Button 
-          variant={viewRole === "FUEL_SUPPLIER" ? "default" : "ghost"} 
-          onClick={() => setViewRole("FUEL_SUPPLIER")}
-          className="gap-2"
-        >
-          <Fuel className="size-4" /> View as Fuel Supplier
-        </Button>
-      </div>
-
-
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 rounded-xl border border-border bg-muted/20">
             {viewRole === "FLEET_COMPANY" ? (
               <>
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-medium">Viewing as Company:</label>
-                  <select 
-                    className="px-3 py-1.5 rounded-lg border border-border text-sm"
-                    value={selectedCompanyId}
-                    onChange={e => setSelectedCompanyId(e.target.value)}
-                  >
-                    {companies.map(c => (
-                      <option key={c.id} value={c.id}>{c.companyName}</option>
-                    ))}
-                  </select>
+                  <span className="font-semibold">{companies.find(c => c.id === selectedCompanyId)?.companyName || selectedCompanyId}</span>
                 </div>
                 <Button size="sm" onClick={() => {
                   setNewRequest({
@@ -259,15 +250,7 @@ export default function Procurement() {
             ) : (
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium">Viewing as Supplier:</label>
-                <select 
-                  className="px-3 py-1.5 rounded-lg border border-border text-sm"
-                  value={selectedSupplierId}
-                  onChange={e => setSelectedSupplierId(e.target.value)}
-                >
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>{s.supplierName}</option>
-                  ))}
-                </select>
+                <span className="font-semibold">{suppliers.find(s => s.id === selectedSupplierId)?.supplierName || selectedSupplierId}</span>
               </div>
             )}
           </div>

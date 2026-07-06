@@ -64,6 +64,11 @@ Package "Fuel Procurement Module" {
                 + getPhoneNumber(): string
             }
 
+            note right of FleetCompany
+                <b>Single-Tenant Constraint:</b>
+                Only one FleetCompany can be registered per instance.
+            end note
+
             Class FuelSupplier {
                 - id: string
                 - supplierName: string

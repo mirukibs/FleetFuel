@@ -1,0 +1,46 @@
+@startuml
+skinparam handwritten false
+skinparam titleFontSize 18
+title FleetFuel Authentication Module - Presentation Layer
+
+Package AuthenticationManagement {
+   Package Presentation {
+      Package Controllers {
+         Class createUser <<Controller>> {
+            + method: post
+            + path: /api/auth/register
+            + handler(request): Response
+         }
+         
+         Class login <<Controller>> {
+            + method: post
+            + path: /api/auth/login
+            + handler(request): Response
+         }
+         
+         Class logout <<Controller>> {
+            + method: post
+            + path: /api/auth/logout
+            + handler(request): Response
+         }
+         
+         Class getSession <<Controller>> {
+            + method: get
+            + path: /api/auth/session
+            + handler(request): Response
+         }
+      }
+      
+      Package Shared {
+         Class respond {
+            + endpoint(config): Function
+         }
+      }
+      
+      createUser ..> respond : uses >
+      login ..> respond : uses >
+      logout ..> respond : uses >
+      getSession ..> respond : uses >
+   }
+}
+@enduml

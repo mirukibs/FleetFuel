@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Procurement from './Procurement';
 import { FleetFuelApi } from '@/lib/client';
 
@@ -74,7 +75,11 @@ describe('Procurement Page', () => {
   });
 
   it('renders procurement requests', async () => {
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
     
     // Wait for data load
     await waitFor(() => {
@@ -85,7 +90,11 @@ describe('Procurement Page', () => {
   it('submits a new procurement request', async () => {
     FleetFuelApi.procurement.create.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
       expect(screen.getByText('TransLogistics')).toBeInTheDocument();
@@ -123,7 +132,11 @@ describe('Procurement Page', () => {
   it('prevents creation if quantity is out of bounds', async () => {
     FleetFuelApi.procurement.create.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
       expect(screen.getByText('TransLogistics')).toBeInTheDocument();
@@ -158,7 +171,11 @@ describe('Procurement Page', () => {
   it('allows submitting a DRAFT request', async () => {
     FleetFuelApi.procurement.submit.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
       expect(screen.getByText('1000L of DIESEL @ TZS 1.5/L')).toBeInTheDocument();
@@ -177,10 +194,12 @@ describe('Procurement Page', () => {
   it('can switch to Fuel Supplier view and accept a request', async () => {
     FleetFuelApi.procurement.accept.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fuel_supplier', affiliatedServiceId: 'supp-1' }} />
+      </MemoryRouter>
+    );
     
-    // Switch to Fuel Supplier view
-    fireEvent.click(screen.getByText('View as Fuel Supplier'));
     
     await waitFor(() => {
       expect(screen.getByText('2000L of DIESEL @ TZS 1.5/L')).toBeInTheDocument();
@@ -199,10 +218,12 @@ describe('Procurement Page', () => {
     FleetFuelApi.procurement.fulfill.mockResolvedValue({});
     FleetFuelApi.fuelAccounts.deposit.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fuel_supplier', affiliatedServiceId: 'supp-1' }} />
+      </MemoryRouter>
+    );
     
-    // Switch to Fuel Supplier view
-    fireEvent.click(screen.getByText('View as Fuel Supplier'));
     
     await waitFor(() => {
       expect(screen.getByText('3000L of PETROL @ TZS 1.6/L')).toBeInTheDocument();
@@ -224,7 +245,11 @@ describe('Procurement Page', () => {
   it('allows editing a DRAFT request in Fleet Company view', async () => {
     FleetFuelApi.procurement.update.mockResolvedValue({});
     
-    render(<Procurement />);
+    render(
+      <MemoryRouter>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
     
     await waitFor(() => {
       expect(screen.getByText('1000L of DIESEL @ TZS 1.5/L')).toBeInTheDocument();
@@ -252,5 +277,21 @@ describe('Procurement Page', () => {
       }));
       expect(FleetFuelApi.procurement.listByCompany).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('pre-fills supplier when location.state has prefillSupplierId', async () => {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/app/procurement', state: { prefillSupplierId: 'supp-1' } }]}>
+        <Procurement user={{ role: 'fleet_company', affiliatedServiceId: 'fc-1' }} />
+      </MemoryRouter>
+    );
+    
+    // Since there's a prefillSupplierId, the modal should open automatically and the supplier should be selected.
+    await waitFor(() => {
+      expect(screen.getByText('Create Procurement Request')).toBeInTheDocument();
+    });
+
+    const supplierSelect = screen.getByTestId('supplier-select');
+    expect(supplierSelect.value).toBe('supp-1');
   });
 });

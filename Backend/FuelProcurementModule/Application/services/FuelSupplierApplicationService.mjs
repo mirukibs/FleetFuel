@@ -8,6 +8,11 @@ export class FuelSupplierApplicationService {
   }
 
   registerFuelSupplier(input) {
+    const existing = this.fuelSupplierRepo.findAll();
+    if (existing.some(s => s.email === input.email)) {
+      throw new Error("A supplier with this email is already registered.");
+    }
+
     const supplier = new FuelSupplier({
       id: input.id,
       supplierName: input.supplierName,
